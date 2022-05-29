@@ -6,10 +6,10 @@ import (
 )
 
 type Route struct {
-	e     *fiber.App
+	e	fiber.Router
 }
 
-func NewRoute(e *fiber.App) *Route {
+func NewRoute(e fiber.Router) *Route {
 	return &Route{e: e}
 }
 

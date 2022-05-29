@@ -9,16 +9,16 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type customerHandler struct {
-	custSrv service.CustomerService
+type productHandler struct {
+	proSrv service.ProductService
 }
 
-func NewCustomerHandler(custSrv service.CustomerService) customerHandler {
-	return customerHandler{custSrv: custSrv}
+func NewProductHandler(proSrv service.ProductService) productHandler {
+	return productHandler{proSrv: proSrv}
 }
 
-func (h customerHandler) GetProducts(c *fiber.Ctx) error {
-	products, err := h.custSrv.GetProducts()
+func (h productHandler) GetProducts(c *fiber.Ctx) error {
+	products, err := h.proSrv.GetProducts()
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
@@ -30,13 +30,13 @@ func (h customerHandler) GetProducts(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h customerHandler) GetProductById(c *fiber.Ctx) error {
+func (h productHandler) GetProductById(c *fiber.Ctx) error {
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
 
-	customer, err := h.custSrv.GetProduct(id)
+	customer, err := h.proSrv.GetProduct(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
@@ -49,14 +49,14 @@ func (h customerHandler) GetProductById(c *fiber.Ctx) error {
 	
 }
 
-func (h customerHandler) CreateProduct(c *fiber.Ctx) error {
+func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 	var newProduct = models.Product{}
 	err := c.BodyParser(&newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
 
-	err = h.custSrv.Create(&newProduct)
+	err = h.proSrv.Create(&newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
@@ -68,14 +68,14 @@ func (h customerHandler) CreateProduct(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h customerHandler) UpdateProduct(c *fiber.Ctx) error {
+func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	var newProduct = models.Product{}
 	err := c.BodyParser(&newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
 
-	err = h.custSrv.Update(&newProduct)
+	err = h.proSrv.Update(&newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
@@ -87,14 +87,14 @@ func (h customerHandler) UpdateProduct(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h customerHandler) DeleteProduct(c *fiber.Ctx) error {
+func (h productHandler) DeleteProduct(c *fiber.Ctx) error {
 
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
 
-	err = h.custSrv.Delete(id)
+	err = h.proSrv.Delete(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}

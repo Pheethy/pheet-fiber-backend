@@ -6,30 +6,30 @@ import (
 )
 
 // *Adapter* //
-type customerService struct{
-	custRepo repository.CustomerRepository
+type productService struct{
+	productRepo repository.ProductRepository
 }
 
-func NewCustomerService(custRepo repository.CustomerRepository)customerService{
-	return customerService{custRepo: custRepo}
+func NewProductService(productRepo repository.ProductRepository)productService{
+	return productService{productRepo: productRepo}
 }
 
-func (r customerService)GetProducts()([]*models.Product,error){
-	return r.custRepo.FetchAll()	
+func (r productService)GetProducts()([]*models.Product,error){
+	return r.productRepo.FetchAll()	
 }
 
-func (r customerService)GetProduct(id int)(*models.Product, error){
-	return r.custRepo.FetchById(id)
+func (r productService)GetProduct(id int)(*models.Product, error){
+	return r.productRepo.FetchById(id)
 }
 
-func (r customerService)Create(product *models.Product)error{
-	return r.custRepo.Create(product)
+func (r productService)Create(product *models.Product)error{
+	return r.productRepo.Create(product)
 }
 
-func(r customerService)Update(product *models.Product)error{
-	return r.custRepo.Update(product)
+func(r productService)Update(product *models.Product)error{
+	return r.productRepo.Update(product)
 }
 
-func(r customerService)Delete(id int)error{
-	return r.custRepo.Delete(id)
+func(r productService)Delete(id int)error{
+	return r.productRepo.Delete(id)
 }

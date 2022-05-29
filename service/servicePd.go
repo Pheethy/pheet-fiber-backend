@@ -3,7 +3,7 @@ package service
 import "main/models"
 
 //* สร้าง pod interface กำหนดว่ามี service อะไรให้ใช้บ้าง*//
-type CustomerService interface{
+type ProductService interface{
 	GetProducts()([]*models.Product,error)
 	GetProduct(id int)(*models.Product, error)
 	Create(product *models.Product)error

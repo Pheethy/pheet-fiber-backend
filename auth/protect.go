@@ -19,7 +19,7 @@ func Protect(signature []byte) fiber.Handler {
 				return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 			}
 			//เช็ค Method ผ่าน return signature ให้
-			return []byte("==signature=="), nil
+			return []byte(signature), nil
 		})
 		if err != nil {
 			return fiber.ErrUnauthorized

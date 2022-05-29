@@ -1,24 +1,31 @@
 package main
 
 import (
+	"log"
 	"main/auth"
 	"main/handler"
 	"main/repository"
 	"main/route"
 	"main/service"
+	"os"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/joho/godotenv"
 )
 
 var db *sqlx.DB
-var err error
 
 func main() {
-	db, err = sqlx.Open("mysql", "root:Bizcuitware@/coffee_list")
+	var err error
+	err = godotenv.Load("local.env")
+	if err != nil {
+		log.Printf("please consider environment variable: %s", err)
+	}
+	db, err = sqlx.Open("mysql", os.Getenv("DB_CONN"))
 	if err != nil {
 		panic(err)
 	}
@@ -30,13 +37,13 @@ func main() {
 	app.Use(cors.New())
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
+		return c.SendString("BizcuitwareWeb")
 	})
-	app.Get("/tokenz", auth.AccessToken("==signature=="))
-	protected := app.Group("", auth.Protect([]byte("==signature==")))
+	app.Get("/tokenz", auth.AccessToken(os.Getenv("SIGN")))
+	protected := app.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
 
 	r := route.NewRoute(protected)
 	r.RegisterProduct(proHandler)
 
-	app.Listen(":8080")
+	app.Listen(os.Getenv("PORT"))
 }

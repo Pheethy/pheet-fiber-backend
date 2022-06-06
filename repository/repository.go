@@ -7,7 +7,7 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-/* Adapter entity confrom Interface Pod*/
+/* Adapter entity conform Interface Pod*/
 type productRepositoryDB struct {
 	db *sqlx.DB
 }

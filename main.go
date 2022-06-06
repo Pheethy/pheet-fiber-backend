@@ -37,7 +37,7 @@ func main() {
 	app.Use(cors.New())
 
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("BizcuitwareWeb")
+		return c.SendString("Bizcuitware Web!!!")
 	})
 	app.Get("/tokenz", auth.AccessToken(os.Getenv("SIGN")))
 	protected := app.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))

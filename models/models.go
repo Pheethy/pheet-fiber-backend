@@ -16,4 +16,5 @@ type User struct {
 	Password string `db:"password" json:"password"`
 	NickName string `db:"nickname" json:"nickname"`
 	Role string `db:"role" json:"role"`
+	Image string `db:"image" json:"image"`
 }

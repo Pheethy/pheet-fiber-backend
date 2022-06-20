@@ -36,13 +36,13 @@ func (h productHandler) GetProductById(c *fiber.Ctx) error {
 		c.JSON(http.StatusInternalServerError)
 	}
 
-	customer, err := h.proSrv.GetProduct(id)
+	product, err := h.proSrv.GetProduct(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
 
 	resp := map[string]interface{}{
-		"customer": customer,
+		"product": product,
 	}
 	
 	return c.JSON(resp)

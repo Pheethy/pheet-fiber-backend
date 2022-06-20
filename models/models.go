@@ -7,6 +7,7 @@ type Product struct {
 	Type string `db:"type" json:"type"`
 	Price int `db:"price" json:"price"`
 	Description string `db:"description" json:"description"`
+	Image string `db:"image" json:"image"`
 }
 
 type User struct {
@@ -14,4 +15,5 @@ type User struct {
 	UserName string `db:"username" json:"username"`
 	Password string `db:"password" json:"password"`
 	NickName string `db:"nickname" json:"nickname"`
+	Role string `db:"role" json:"role"`
 }

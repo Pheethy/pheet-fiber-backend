@@ -20,7 +20,7 @@ func NewProductRepository(db *sqlx.DB)productRepositoryDB{
 func (r productRepositoryDB)FetchAll()([]*models.Product, error){
 	sql := `
 	SELECT
-		id, name, type, price, description
+		id, name, type, price, description, image
 	FROM
 		product
 	`
@@ -35,7 +35,7 @@ func (r productRepositoryDB)FetchAll()([]*models.Product, error){
 func (r productRepositoryDB)FetchById(id int)(*models.Product, error){
 	sql := `
 	SELECT
-		id, name, type, price, description
+		id, name, type, price, description, image
 	FROM
 		product
 	WHERE
@@ -53,11 +53,11 @@ func (r productRepositoryDB)FetchById(id int)(*models.Product, error){
 func (r productRepositoryDB)Create(product *models.Product)error{
 	sql := `
 	INSERT INTO
-		product (id, name, type, price, description)
+		product (id, name, type, price, description, image)
 	VALUES
-		(?, ?, ?, ?, ?)
+		(?, ?, ?, ?, ?, ?)
 	`
-	result, err := r.db.Exec(sql, product.Id, product.Name, product.Type, product.Price, product.Description)
+	result, err := r.db.Exec(sql, product.Id, product.Name, product.Type, product.Price, product.Description, product.Image)
 	if err != nil {
 		return err
 	}
@@ -82,10 +82,11 @@ func (r productRepositoryDB)Update(product *models.Product)error{
 		type = ?,
 		price = ?,
 		description = ?
+		image = ?
 	WHERE
 		id = ?
 	`
-	result, err := r.db.Exec(sql, product.Name, product.Type, product.Price, product.Description, product.Id)
+	result, err := r.db.Exec(sql, product.Name, product.Type, product.Price, product.Description, product.Image,product.Id)
 	if err != nil {
 		return err
 	}

@@ -22,6 +22,10 @@ func (r productService)GetProduct(id int)(*models.Product, error){
 	return r.productRepo.FetchById(id)
 }
 
+func (r productService)GetProductByType(coffType string)([]*models.Product, error){
+	return r.productRepo.FetchByType(coffType)
+}
+
 func (r productService)Create(product *models.Product)error{
 	return r.productRepo.Create(product)
 }

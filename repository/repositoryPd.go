@@ -6,6 +6,7 @@ import "main/models"
 type ProductRepository interface {
 	FetchAll()([]*models.Product, error)
 	FetchById(id int)(*models.Product, error)
+	FetchByType(coffType string)([]*models.Product, error)
 	Create(product *models.Product)error
 	Update(product *models.Product)error
 	Delete(id int)error

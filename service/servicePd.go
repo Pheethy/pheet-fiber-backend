@@ -6,6 +6,7 @@ import "main/models"
 type ProductService interface{
 	GetProducts()([]*models.Product,error)
 	GetProduct(id int)(*models.Product, error)
+	GetProductByType(coffType string)([]*models.Product, error)
 	Create(product *models.Product)error
 	Update(product *models.Product)error
 	Delete(id int)error

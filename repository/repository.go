@@ -2,6 +2,8 @@ package repository
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"main/models"
 
 	"github.com/jmoiron/sqlx"
@@ -32,6 +34,25 @@ func (r productRepositoryDB)FetchAll()([]*models.Product, error){
 	return products, nil
 }
 
+func (r productRepositoryDB)FetchByType(coffType string)([]*models.Product, error){
+	sql := fmt.Sprintf(`
+	SELECT
+		id, name, type, price, description, image
+	FROM
+		product
+	WHERE
+		type = '%s'
+	`, coffType)
+	
+	log.Println(sql)
+	var products []*models.Product
+	err := r.db.Select(&products, sql)
+	if err != nil {
+		return nil, err
+	}
+	return products, nil
+}
+
 func (r productRepositoryDB)FetchById(id int)(*models.Product, error){
 	sql := `
 	SELECT
@@ -41,6 +62,7 @@ func (r productRepositoryDB)FetchById(id int)(*models.Product, error){
 	WHERE
 		id=?
 	`
+	log.Println(sql)
 	var product models.Product
 	err := r.db.Get(&product, sql, id)
 	if err != nil {

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"main/models"
 	"main/service"
 	"net/http"
@@ -46,7 +47,22 @@ func (h productHandler) GetProductById(c *fiber.Ctx) error {
 	}
 	
 	return c.JSON(resp)
+}
+
+func (h productHandler) GetProductByType(c *fiber.Ctx) error {
+	coffType := c.Params("type")
+	log.Println(coffType)
+
+	product, err := h.proSrv.GetProductByType(coffType)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError)
+	}
+
+	resp := map[string]interface{}{
+		"products": product,
+	}
 	
+	return c.JSON(resp)
 }
 
 func (h productHandler) CreateProduct(c *fiber.Ctx) error {

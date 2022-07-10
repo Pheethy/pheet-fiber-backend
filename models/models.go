@@ -14,7 +14,9 @@ type User struct {
 	Id int `db:"id" json:"id"`
 	UserName string `db:"username" json:"username"`
 	Password string `db:"password" json:"password"`
-	NickName string `db:"nickname" json:"nickname"`
-	Role string `db:"role" json:"role"`
-	Image string `db:"image" json:"image"`
+}
+
+type SignUpReq struct {
+	UserName string `db:"username" json:"username"`
+	Password string `db:"password" json:"password"`
 }

@@ -25,10 +25,12 @@ func main() {
 	if err != nil {
 		log.Printf("please consider environment variable: %s", err)
 	}
+
 	db, err = sqlx.Open("mysql", os.Getenv("DB_CONN"))
 	if err != nil {
 		panic(err)
 	}
+
 	proRepo := repository.NewProductRepository(db)
 	proService := service.NewProductService(proRepo)
 	proHandler := handler.NewProductHandler(proService)
@@ -39,7 +41,10 @@ func main() {
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Bizcuitware Web!!!")
 	})
-	app.Get("/tokenz", auth.AccessToken(os.Getenv("SIGN")))
+
+	app.Post("/register", proHandler.SignUp)
+	app.Post("/login", proHandler.Login)
+
 	protected := app.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
 
 	r := route.NewRoute(protected)

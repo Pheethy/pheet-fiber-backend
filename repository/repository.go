@@ -3,7 +3,6 @@ package repository
 import (
 	"errors"
 	"fmt"
-	"log"
 	"main/models"
 
 	"github.com/jmoiron/sqlx"
@@ -43,8 +42,6 @@ func (r productRepositoryDB)FetchByType(coffType string)([]*models.Product, erro
 	WHERE
 		type = '%s'
 	`, coffType)
-	
-	log.Println(sql)
 	var products []*models.Product
 	err := r.db.Select(&products, sql)
 	if err != nil {
@@ -62,7 +59,6 @@ func (r productRepositoryDB)FetchById(id int)(*models.Product, error){
 	WHERE
 		id=?
 	`
-	log.Println(sql)
 	var product models.Product
 	err := r.db.Get(&product, sql, id)
 	if err != nil {
@@ -93,6 +89,47 @@ func (r productRepositoryDB)Create(product *models.Product)error{
 	}
 
 	return nil
+}
+
+func (r productRepositoryDB)SignUp(user *models.SignUpReq)error{
+	sql := `
+	INSERT INTO
+		user (username, password)
+	VALUES
+		(?, ?)
+	`
+	result, err := r.db.Exec(sql, user.UserName, user.Password)
+	if err != nil {
+		return err
+	}
+
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected < 1 {
+		return errors.New("Create fail")
+	}
+
+	return nil
+}
+
+func (r productRepositoryDB)FetchUser(username string)(*models.User, error){
+	sql := `
+	SELECT
+		id, username, password
+	FROM
+		user
+	WHERE
+		username = ?
+	`
+	var user models.User
+	err := r.db.Get(&user, sql, username)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }
 
 func (r productRepositoryDB)Update(product *models.Product)error{

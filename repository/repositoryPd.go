@@ -10,6 +10,6 @@ type ProductRepository interface {
 	FetchUser(username string)(*models.User, error)
 	Create(product *models.Product)error
 	SignUp(user *models.SignUpReq)error
-	Update(product *models.Product)error
+	Update(product *models.Product) error
 	Delete(id int)error
 }

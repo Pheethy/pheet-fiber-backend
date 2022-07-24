@@ -14,11 +14,11 @@ type productRepositoryDB struct {
 }
 
 // constructor //
-func NewProductRepository(db *sqlx.DB)productRepositoryDB{
+func NewProductRepository(db *sqlx.DB) productRepositoryDB {
 	return productRepositoryDB{db: db}
 }
 
-func (r productRepositoryDB)FetchAll()([]*models.Product, error){
+func (r productRepositoryDB) FetchAll() ([]*models.Product, error) {
 	sql := `
 	SELECT
 		id, name, type, price, description, image
@@ -33,7 +33,7 @@ func (r productRepositoryDB)FetchAll()([]*models.Product, error){
 	return products, nil
 }
 
-func (r productRepositoryDB)FetchByType(coffType string)([]*models.Product, error){
+func (r productRepositoryDB) FetchByType(coffType string) ([]*models.Product, error) {
 	sql := fmt.Sprintf(`
 	SELECT
 		id, name, type, price, description, image
@@ -50,7 +50,7 @@ func (r productRepositoryDB)FetchByType(coffType string)([]*models.Product, erro
 	return products, nil
 }
 
-func (r productRepositoryDB)FetchById(id int)(*models.Product, error){
+func (r productRepositoryDB) FetchById(id int) (*models.Product, error) {
 	sql := `
 	SELECT
 		id, name, type, price, description, image
@@ -68,7 +68,7 @@ func (r productRepositoryDB)FetchById(id int)(*models.Product, error){
 	return &product, nil
 }
 
-func (r productRepositoryDB)Create(product *models.Product)error{
+func (r productRepositoryDB) Create(product *models.Product) error {
 	sql := `
 	INSERT INTO
 		product (id, name, type, price, description, image)
@@ -91,7 +91,7 @@ func (r productRepositoryDB)Create(product *models.Product)error{
 	return nil
 }
 
-func (r productRepositoryDB)SignUp(user *models.SignUpReq)error{
+func (r productRepositoryDB) SignUp(user *models.SignUpReq) error {
 	sql := `
 	INSERT INTO
 		user (username, password)
@@ -114,7 +114,7 @@ func (r productRepositoryDB)SignUp(user *models.SignUpReq)error{
 	return nil
 }
 
-func (r productRepositoryDB)FetchUser(username string)(*models.User, error){
+func (r productRepositoryDB) FetchUser(username string) (*models.User, error) {
 	sql := `
 	SELECT
 		id, username, password
@@ -132,28 +132,30 @@ func (r productRepositoryDB)FetchUser(username string)(*models.User, error){
 	return &user, nil
 }
 
-func (r productRepositoryDB)Update(product *models.Product)error{
+func (r productRepositoryDB) Update(product *models.Product) error {
 	sql := `
-	UPDATE 
-		product
-	SET
-		name = ?,
-		type = ?,
-		price = ?,
-		description = ?
-		image = ?
-	WHERE
-		id = ?
+		UPDATE 
+			product
+		SET
+			name = ?,
+			type = ?,
+			price = ?,
+			description = ?,
+			image = ?
+		WHERE
+			id = ?
 	`
-	result, err := r.db.Exec(sql, product.Name, product.Type, product.Price, product.Description, product.Image,product.Id)
+
+	result, err := r.db.Exec(sql, product.Name, product.Type, product.Price, product.Description, product.Image, product.Id)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	affected, err := result.RowsAffected()
 	if err != nil {
 		return err
 	}
+
 	if affected < 1 {
 		return errors.New("Update fail")
 	}
@@ -161,7 +163,7 @@ func (r productRepositoryDB)Update(product *models.Product)error{
 	return nil
 }
 
-func (r productRepositoryDB)Delete(id int)error{
+func (r productRepositoryDB) Delete(id int) error {
 	sql := `
 	DELETE FROM 
 		product

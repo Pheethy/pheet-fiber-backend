@@ -29,8 +29,6 @@ func (h productHandler) Login(c *fiber.Ctx) error {
 		return c.JSON(err.Error())
 	}
 
-	log.Println(request)
-
 	if request.UserName == "" || request.Password == "" {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
@@ -49,10 +47,8 @@ func (h productHandler) Login(c *fiber.Ctx) error {
 
 	resp := map[string]interface{}{
 		"message": "Login-success",
-		"่jwt": tokenz,
+		"jwt": tokenz,
 	}
-
-	log.Println("response", resp)
 
 	return c.JSON(resp)
 }
@@ -154,10 +150,13 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 
 func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	var newProduct = models.Product{}
+	
 	err := c.BodyParser(&newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
+
+	log.Println("RequestUpdateModels",newProduct)
 
 	err = h.proSrv.Update(&newProduct)
 	if err != nil {

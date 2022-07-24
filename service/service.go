@@ -38,7 +38,7 @@ func (r productService)SignUp(user *models.SignUpReq)error{
 	return r.productRepo.SignUp(user)
 }
 
-func(r productService)Update(product *models.Product)error{
+func(r productService)Update(product *models.Product) error{
 	return r.productRepo.Update(product)
 }
 

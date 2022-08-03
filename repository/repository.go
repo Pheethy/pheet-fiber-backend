@@ -108,7 +108,7 @@ func (r productRepositoryDB) SignUp(user *models.SignUpReq) error {
 		return err
 	}
 	if affected < 1 {
-		return errors.New("Create fail")
+		return errors.New("SignUp Error")
 	}
 
 	return nil

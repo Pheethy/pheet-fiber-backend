@@ -136,6 +136,8 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 		c.JSON(http.StatusInternalServerError)
 	}
 
+	log.Println("newProductRequest:", newProduct)
+
 	err = h.proSrv.Create(&newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)

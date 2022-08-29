@@ -21,7 +21,7 @@ var db *sqlx.DB
 
 func main() {
 	var err error
-	err = godotenv.Load("local.env")
+	err = godotenv.Load("local.env")/*Load Env*/
 	if err != nil {
 		log.Printf("please consider environment variable: %s", err)
 	}

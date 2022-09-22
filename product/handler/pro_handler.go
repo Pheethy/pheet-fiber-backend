@@ -4,7 +4,7 @@ import (
 	"log"
 	"main/auth"
 	"main/models"
-	"main/service"
+	"main/product"
 	"net/http"
 	"os"
 	"strconv"
@@ -14,10 +14,10 @@ import (
 )
 
 type productHandler struct {
-	proSrv service.ProductService
+	proSrv product.ProductService
 }
 
-func NewProductHandler(proSrv service.ProductService) productHandler {
+func NewProductHandler(proSrv product.ProductService) productHandler {
 	return productHandler{proSrv: proSrv}
 }
 

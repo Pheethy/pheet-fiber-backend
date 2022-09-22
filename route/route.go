@@ -1,7 +1,7 @@
 package route
 
 import (
-	"main/handler"
+	"main/product"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -13,7 +13,7 @@ func NewRoute(e fiber.Router) *Route {
 	return &Route{e: e}
 }
 
-func (r Route) RegisterProduct(handler handler.ProductHandler) {
+func (r Route) RegisterProduct(handler product.ProductHandler) {
 	r.e.Get("/products", handler.GetProducts)
 	r.e.Get("/product/:id", handler.GetProductById)
 	r.e.Get("/products/:type", handler.GetProductByType)

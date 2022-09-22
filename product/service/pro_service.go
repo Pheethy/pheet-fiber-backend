@@ -2,15 +2,15 @@ package service
 
 import (
 	"main/models"
-	"main/repository"
+	"main/product"
 )
 
 // *Adapter* //
 type productService struct{
-	productRepo repository.ProductRepository
+	productRepo product.ProductRepository
 }
 
-func NewProductService(productRepo repository.ProductRepository)productService{
+func NewProductService(productRepo product.ProductRepository)productService{
 	return productService{productRepo: productRepo}
 }
 

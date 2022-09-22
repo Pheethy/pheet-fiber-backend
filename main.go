@@ -3,10 +3,10 @@ package main
 import (
 	"log"
 	"main/auth"
-	"main/handler"
-	"main/repository"
+	"main/product/handler"
+	"main/product/repository"
 	"main/route"
-	"main/service"
+	"main/product/service"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"

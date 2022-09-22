@@ -26,10 +26,13 @@ func (r productRepositoryDB) FetchAll() ([]*models.Product, error) {
 		product
 	`
 	var products []*models.Product
-	err := r.db.Select(&products, sql)
+	stmt, err := r.db.Preparex(sql)
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
+	
+	stmt.Queryx()
 	return products, nil
 }
 

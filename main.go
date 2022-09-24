@@ -45,9 +45,8 @@ func main() {
 	app.Post("/register", proHandler.SignUp)
 	app.Post("/login", proHandler.Login)
 
-	protected := app.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
-
-	r := route.NewRoute(protected)
+	productGroup := app.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
+	r := route.NewRoute(productGroup)
 	r.RegisterProduct(proHandler)
 
 	app.Listen(os.Getenv("PORT"))

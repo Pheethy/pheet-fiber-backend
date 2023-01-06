@@ -1,7 +1,7 @@
 package route
 
 import (
-	"main/product"
+	"pheet-fiber-backend/service/product"
 	"github.com/gofiber/fiber/v2"
 )
 

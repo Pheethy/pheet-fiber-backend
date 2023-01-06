@@ -1,10 +1,13 @@
 package product
 
-import "main/models"
+import (
+	"context"
+	"pheet-fiber-backend/models"
+)
 
 // *สร้าง pod interface กำหนดว่ามีกี่* //
 type ProductRepository interface {
-	FetchAll()([]*models.Product, error)
+	FetchAll(ctx context.Context)([]*models.Product, error)
 	FetchById(id int)(*models.Product, error)
 	FetchByType(coffType string)([]*models.Product, error)
 	FetchUser(username string)(*models.User, error)

@@ -2,11 +2,11 @@ package handler
 
 import (
 	"log"
-	"main/auth"
-	"main/models"
-	"main/product"
 	"net/http"
 	"os"
+	"pheet-fiber-backend/auth"
+	"pheet-fiber-backend/models"
+	"pheet-fiber-backend/service/product"
 	"strconv"
 
 	"github.com/gofiber/fiber/v2"
@@ -14,10 +14,10 @@ import (
 )
 
 type productHandler struct {
-	proSrv product.ProductService
+	proSrv product.ProductUsecase
 }
 
-func NewProductHandler(proSrv product.ProductService) productHandler {
+func NewProductHandler(proSrv product.ProductUsecase) product.ProductHandler {
 	return productHandler{proSrv: proSrv}
 }
 
@@ -84,7 +84,8 @@ func (h productHandler) SignUp(c *fiber.Ctx) error {
 }
 
 func (h productHandler) GetProducts(c *fiber.Ctx) error {
-	products, err := h.proSrv.GetProducts()
+	var ctx = c.Context()
+	products, err := h.proSrv.GetProducts(ctx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}

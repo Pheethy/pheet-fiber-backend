@@ -2,11 +2,11 @@ package main
 
 import (
 	"log"
-	"main/auth"
-	"main/product/handler"
-	"main/product/repository"
-	"main/route"
-	"main/product/service"
+	"pheet-fiber-backend/auth"
+	"pheet-fiber-backend/service/product/handler"
+	"pheet-fiber-backend/service/product/repository"
+	"pheet-fiber-backend/route"
+	"pheet-fiber-backend/service/product/usecase"
 	"os"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -17,7 +17,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var db *sqlx.DB
+var msqlDB *sqlx.DB
 
 func main() {
 	var err error
@@ -26,13 +26,13 @@ func main() {
 		log.Printf("please consider environment variable: %s", err)
 	}
 
-	db, err = sqlx.Open("mysql", os.Getenv("DB_CONN"))
+	msqlDB, err = sqlx.Open("mysql", os.Getenv("DB_CONN"))
 	if err != nil {
 		panic(err)
 	}
 
-	proRepo := repository.NewProductRepository(db)
-	proService := service.NewProductService(proRepo)
+	proRepo := repository.NewProductRepository(msqlDB)
+	proService := service.NewProductUsecase(proRepo)
 	proHandler := handler.NewProductHandler(proService)
 
 	app := *fiber.New()

@@ -1,24 +1,26 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"main/models"
+	"pheet-fiber-backend/models"
+	"pheet-fiber-backend/service/product"
 
 	"github.com/jmoiron/sqlx"
 )
 
 /* Adapter entity conform Interface Pod*/
 type productRepositoryDB struct {
-	db *sqlx.DB
+	msqlDB *sqlx.DB
 }
 
 // constructor //
-func NewProductRepository(db *sqlx.DB) productRepositoryDB {
-	return productRepositoryDB{db: db}
+func NewProductRepository(db *sqlx.DB) product.ProductRepository {
+	return productRepositoryDB{msqlDB: db}
 }
 
-func (r productRepositoryDB) FetchAll() ([]*models.Product, error) {
+func (r productRepositoryDB) FetchAll(ctx context.Context) ([]*models.Product, error) {
 	sql := `
 	SELECT
 		id, name, type, price, description, image
@@ -26,11 +28,11 @@ func (r productRepositoryDB) FetchAll() ([]*models.Product, error) {
 		product
 	`
 	var products []*models.Product
-	err := r.db.Select(&products, sql)
+	err := r.msqlDB.SelectContext(ctx, &products, sql)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return products, nil
 }
 
@@ -44,7 +46,7 @@ func (r productRepositoryDB) FetchByType(coffType string) ([]*models.Product, er
 		type = '%s'
 	`, coffType)
 	var products []*models.Product
-	err := r.db.Select(&products, sql)
+	err := r.msqlDB.Select(&products, sql)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +63,7 @@ func (r productRepositoryDB) FetchById(id int) (*models.Product, error) {
 		id=?
 	`
 	var product models.Product
-	err := r.db.Get(&product, sql, id)
+	err := r.msqlDB.Get(&product, sql, id)
 	if err != nil {
 		return nil, err
 	}
@@ -76,7 +78,7 @@ func (r productRepositoryDB) Create(product *models.Product) error {
 	VALUES
 		(?, ?, ?, ?, ?, ?)
 	`
-	result, err := r.db.Exec(sql, product.Id, product.Name, product.Type, product.Price, product.Description, product.Image)
+	result, err := r.msqlDB.Exec(sql, product.Id, product.Name, product.Type, product.Price, product.Description, product.Image)
 	if err != nil {
 		return err
 	}
@@ -99,7 +101,7 @@ func (r productRepositoryDB) SignUp(user *models.SignUpReq) error {
 	VALUES
 		(?, ?)
 	`
-	result, err := r.db.Exec(sql, user.UserName, user.Password)
+	result, err := r.msqlDB.Exec(sql, user.UserName, user.Password)
 	if err != nil {
 		return err
 	}
@@ -125,7 +127,7 @@ func (r productRepositoryDB) FetchUser(username string) (*models.User, error) {
 		username = ?
 	`
 	var user models.User
-	err := r.db.Get(&user, sql, username)
+	err := r.msqlDB.Get(&user, sql, username)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +149,7 @@ func (r productRepositoryDB) Update(product *models.Product) error {
 			id = ?
 	`
 
-	result, err := r.db.Exec(sql, product.Name, product.Type, product.Price, product.Description, product.Image, product.Id)
+	result, err := r.msqlDB.Exec(sql, product.Name, product.Type, product.Price, product.Description, product.Image, product.Id)
 	if err != nil {
 		panic(err)
 	}
@@ -171,7 +173,7 @@ func (r productRepositoryDB) Delete(id int) error {
 	WHERE
 		id = ?
 	`
-	result, err := r.db.Exec(sql, id)
+	result, err := r.msqlDB.Exec(sql, id)
 	if err != nil {
 		return err
 	}

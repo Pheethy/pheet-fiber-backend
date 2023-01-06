@@ -1,10 +1,13 @@
 package product
 
-import "main/models"
+import (
+	"context"
+	"pheet-fiber-backend/models"
+)
 
 //* สร้าง pod interface กำหนดว่ามี service อะไรให้ใช้บ้าง*//
-type ProductService interface{
-	GetProducts()([]*models.Product,error)
+type ProductUsecase interface{
+	GetProducts(ctx context.Context)([]*models.Product,error)
 	GetProduct(id int)(*models.Product, error)
 	GetProductByType(coffType string)([]*models.Product, error)
 	GetUser(username string)(*models.User, error)

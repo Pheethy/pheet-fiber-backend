@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"pheet-fiber-backend/auth"
@@ -39,7 +38,7 @@ func (h productHandler) Login(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusNotFound, "incorrect username or password")
 	}
 
-	err = bcrypt.CompareHashAndPassword([]byte(user.Password),[]byte(request.Password))
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(request.Password))
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "incorrect username or password")
 	}
@@ -48,7 +47,7 @@ func (h productHandler) Login(c *fiber.Ctx) error {
 
 	resp := map[string]interface{}{
 		"message": "Login-success",
-		"jwt": tokenz,
+		"jwt":     tokenz,
 	}
 
 	return c.JSON(resp)
@@ -116,7 +115,7 @@ func (h productHandler) GetProductById(c *fiber.Ctx) error {
 	resp := map[string]interface{}{
 		"product": product,
 	}
-	
+
 	return c.JSON(resp)
 }
 
@@ -131,7 +130,7 @@ func (h productHandler) GetProductByType(c *fiber.Ctx) error {
 	resp := map[string]interface{}{
 		"products": product,
 	}
-	
+
 	return c.JSON(resp)
 }
 
@@ -143,8 +142,7 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
-	
-	log.Println("newProductRequest:", newProduct)
+
 	newProduct.NewUUID()
 	newProduct.SetCreatedAt(&time)
 	newProduct.SetUpdatedAt(&time)
@@ -163,13 +161,11 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 
 func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	var newProduct = models.Products{}
-	
+
 	err := c.BodyParser(&newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
-
-	log.Println("RequestUpdateModels",newProduct)
 
 	err = h.proSrv.Update(&newProduct)
 	if err != nil {

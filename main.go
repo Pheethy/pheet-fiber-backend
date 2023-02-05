@@ -9,7 +9,7 @@ import (
 	"pheet-fiber-backend/service/product/usecase"
 	"os"
 
-	_ "github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 
@@ -17,23 +17,28 @@ import (
 	"github.com/joho/godotenv"
 )
 
-var msqlDB *sqlx.DB
+var psqlDB *sqlx.DB
 
 func main() {
 	var err error
-	err = godotenv.Load("local.env")/*Load Env*/
+	err = godotenv.Load(".env")/*Load Env*/
 	if err != nil {
 		log.Printf("please consider environment variable: %s", err)
 	}
 
-	msqlDB, err = sqlx.Open("mysql", os.Getenv("DB_CONN"))
+	psqlDB, err = sqlx.Open("postgres", os.Getenv("PSQL_DATABASE_URL"))
 	if err != nil {
 		panic(err)
 	}
 
-	proRepo := repository.NewProductRepository(msqlDB)
+	proRepo := repository.NewProductRepository(psqlDB)
 	proService := service.NewProductUsecase(proRepo)
 	proHandler := handler.NewProductHandler(proService)
+
+	err = psqlDB.Ping()
+	if err != nil {
+		log.Println(err)
+	}
 
 	app := *fiber.New()
 	app.Use(cors.New())

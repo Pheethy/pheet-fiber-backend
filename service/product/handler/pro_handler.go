@@ -8,6 +8,7 @@ import (
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/product"
 	"strconv"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
@@ -29,11 +30,11 @@ func (h productHandler) Login(c *fiber.Ctx) error {
 		return c.JSON(err.Error())
 	}
 
-	if request.UserName == "" || request.Password == "" {
+	if request.Username == "" || request.Password == "" {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
-	user, err := h.proSrv.GetUser(request.UserName)
+	user, err := h.proSrv.GetUser(request.Username)
 	if err != nil {
 		return fiber.NewError(fiber.StatusNotFound, "incorrect username or password")
 	}
@@ -54,14 +55,15 @@ func (h productHandler) Login(c *fiber.Ctx) error {
 }
 
 func (h productHandler) SignUp(c *fiber.Ctx) error {
-	var request = models.SignUpReq{}
-
+	var ctx = c.Context()
+	var request = new(models.User)
+	var time = models.NewTimestampFromTime(time.Now())
 	err := c.BodyParser(&request)
 	if err != nil {
 		return c.JSON(err.Error())
 	}
 
-	if request.UserName == "" || request.Password == "" {
+	if request.Username == "" || request.Password == "" {
 		return fiber.NewError(fiber.StatusUnprocessableEntity, err.Error())
 	}
 
@@ -70,8 +72,11 @@ func (h productHandler) SignUp(c *fiber.Ctx) error {
 		return c.JSON(http.StatusInternalServerError)
 	}
 	request.Password = string(password)
+	request.NewUUID()
+	request.SetCreatedAt(&time)
+	request.SetUpdatedAt(&time)
 
-	err = h.proSrv.SignUp(&request)
+	err = h.proSrv.SignUp(ctx, request)
 	if err != nil {
 		return c.JSON(err.Error())
 	}
@@ -131,15 +136,20 @@ func (h productHandler) GetProductByType(c *fiber.Ctx) error {
 }
 
 func (h productHandler) CreateProduct(c *fiber.Ctx) error {
-	var newProduct = models.Product{}
-	err := c.BodyParser(&newProduct)
+	var ctx = c.Context()
+	var newProduct = new(models.Products)
+	var time = models.NewTimestampFromTime(time.Now())
+	err := c.BodyParser(newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
-
+	
 	log.Println("newProductRequest:", newProduct)
+	newProduct.NewUUID()
+	newProduct.SetCreatedAt(&time)
+	newProduct.SetUpdatedAt(&time)
 
-	err = h.proSrv.Create(&newProduct)
+	err = h.proSrv.Create(ctx, newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
@@ -152,7 +162,7 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 }
 
 func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
-	var newProduct = models.Product{}
+	var newProduct = models.Products{}
 	
 	err := c.BodyParser(&newProduct)
 	if err != nil {

@@ -7,12 +7,12 @@ import (
 
 // *สร้าง pod interface กำหนดว่ามีกี่* //
 type ProductRepository interface {
-	FetchAll(ctx context.Context)([]*models.Product, error)
-	FetchById(id int)(*models.Product, error)
-	FetchByType(coffType string)([]*models.Product, error)
+	FetchAll(ctx context.Context)([]*models.Products, error)
+	FetchById(id int)(*models.Products, error)
+	FetchByType(coffType string)([]*models.Products, error)
 	FetchUser(username string)(*models.User, error)
-	Create(product *models.Product)error
-	SignUp(user *models.SignUpReq)error
-	Update(product *models.Product) error
+	Create(ctx context.Context, product *models.Products) error
+	SignUp(ctx context.Context, user *models.User) error
+	Update(product *models.Products) error
 	Delete(id int)error
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/product"
+
+	"github.com/gofrs/uuid"
 )
 
 // *Adapter* //
@@ -39,8 +41,8 @@ func (r productUsecase)SignUp(ctx context.Context, user *models.User) error {
 	return r.productRepo.SignUp(ctx, user)
 }
 
-func(r productUsecase)Update(product *models.Products) error{
-	return r.productRepo.Update(product)
+func(r productUsecase)Update(ctx context.Context, product *models.Products, id *uuid.UUID) error{
+	return r.productRepo.Update(ctx, product, id)
 }
 
 func(r productUsecase)Delete(id int)error{

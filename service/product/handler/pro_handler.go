@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofrs/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -153,27 +154,31 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 	}
 
 	resp := map[string]interface{}{
-		"massage": "created.",
+		"massage": "product has created.",
 	}
 
 	return c.JSON(resp)
 }
 
 func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
-	var newProduct = models.Products{}
+	var ctx = c.Context()
+	var newProduct = new(models.Products)
+	var id = uuid.FromStringOrNil(c.Params("product_id"))
+	var time = models.NewTimestampFromTime(time.Now())
 
-	err := c.BodyParser(&newProduct)
+	err := c.BodyParser(newProduct)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
+	newProduct.SetUpdatedAt(&time) //set update timestamp
 
-	err = h.proSrv.Update(&newProduct)
+	err = h.proSrv.Update(ctx, newProduct, &id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
 
 	resp := map[string]interface{}{
-		"massage": "updated.",
+		"massage": "product has updated.",
 	}
 
 	return c.JSON(resp)

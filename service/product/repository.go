@@ -3,6 +3,8 @@ package product
 import (
 	"context"
 	"pheet-fiber-backend/models"
+
+	"github.com/gofrs/uuid"
 )
 
 // *สร้าง pod interface กำหนดว่ามีกี่* //
@@ -13,6 +15,6 @@ type ProductRepository interface {
 	FetchUser(username string)(*models.User, error)
 	Create(ctx context.Context, product *models.Products) error
 	SignUp(ctx context.Context, user *models.User) error
-	Update(product *models.Products) error
+	Update(ctx context.Context, product *models.Products, id *uuid.UUID) error
 	Delete(id int)error
 }

@@ -8,6 +8,7 @@ import (
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/product"
 
+	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -126,7 +127,7 @@ func (r productRepositoryDB) Create(ctx context.Context, product *models.Product
 	); err != nil {
 		log.Println("err db:", err)
 	}
-	
+
 	return tx.Commit()
 }
 
@@ -148,7 +149,7 @@ func (r productRepositoryDB) SignUp(ctx context.Context, user *models.User) erro
 	`
 	stmt, err := tx.Preparex(sql)
 	if err != nil {
-		return err
+		panic(err)
 	}
 	defer stmt.Close()
 
@@ -159,41 +160,51 @@ func (r productRepositoryDB) SignUp(ctx context.Context, user *models.User) erro
 		user.CreatedAt,
 		user.UpdatedAt,
 	); err != nil {
-		log.Println("err db:", err)
+		panic(err)
 	}
-	
+
 	return tx.Commit()
 }
 
-func (r productRepositoryDB) Update(product *models.Products) error {
-	// sql := `
-	// 	UPDATE 
-	// 		product
-	// 	SET
-	// 		name = ?,
-	// 		type = ?,
-	// 		price = ?,
-	// 		description = ?,
-	// 		image = ?
-	// 	WHERE
-	// 		id = ?
-	// `
+func (r productRepositoryDB) Update(ctx context.Context, product *models.Products, id *uuid.UUID) error {
+	tx, err := r.psqlDB.Beginx()
+	if err != nil {
+		return nil
+	}
 
-	// result, err := r.psqlDB.Exec(sql, product.Name, product.Type, product.Price, product.Description, product.Image, product.Id)
-	// if err != nil {
-	// 	panic(err)
-	// }
+	sql := `
+		UPDATE 
+			products
+		SET
+			name=$1::text,
+			detail=$2::text,
+			type=$3::product_type,
+			price=$4::integer,
+			cover=$5::text,
+			updated_at=$6::timestamp
+		WHERE
+			id = $7::uuid
+	`
 
-	// affected, err := result.RowsAffected()
-	// if err != nil {
-	// 	return err
-	// }
+	stmt, err := tx.PreparexContext(ctx, sql)
+	if err != nil {
+		panic(err)
+	}
+	defer stmt.Close()
 
-	// if affected < 1 {
-	// 	return errors.New("Update fail")
-	// }
+	if _, err := stmt.ExecContext(ctx,
+		product.Name,
+		product.Detail,
+		product.Type,
+		product.Price,
+		product.Image,
+		product.UpdatedAt,
+		id,
+	); err != nil {
+		panic(err)
+	}
 
-	return nil
+	return tx.Commit()
 }
 
 func (r productRepositoryDB) Delete(id int) error {

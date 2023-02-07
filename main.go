@@ -2,16 +2,17 @@ package main
 
 import (
 	"log"
+	"os"
 	"pheet-fiber-backend/auth"
+	"pheet-fiber-backend/route"
 	"pheet-fiber-backend/service/product/handler"
 	"pheet-fiber-backend/service/product/repository"
-	"pheet-fiber-backend/route"
 	"pheet-fiber-backend/service/product/usecase"
-	"os"
+	validate "pheet-fiber-backend/service/product/validator"
 
-	_ "github.com/lib/pq"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	_ "github.com/lib/pq"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
@@ -34,6 +35,7 @@ func main() {
 	proRepo := repository.NewProductRepository(psqlDB)
 	proService := service.NewProductUsecase(proRepo)
 	proHandler := handler.NewProductHandler(proService)
+	var validate = validate.Validation{}
 
 	err = psqlDB.Ping()
 	if err != nil {
@@ -52,7 +54,7 @@ func main() {
 
 	productGroup := app.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
 	r := route.NewRoute(productGroup)
-	r.RegisterProduct(proHandler)
+	r.RegisterProduct(proHandler, validate)
 
 	app.Listen(os.Getenv("PORT"))
 }

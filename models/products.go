@@ -4,10 +4,10 @@ import (
 	"github.com/gofrs/uuid"
 )
 
-//*Entity เพื่อจะส่งข้อมูลออกไป *//
+// *Entity เพื่อจะส่งข้อมูลออกไป *//
 type Products struct {
 	Id        *uuid.UUID `db:"id" json:"id" type:"uuid"`
-	Name      string     `db:"name" json:"name" type:"string"`
+	Name      string     `db:"name" json:"name" type:"string" validate:"required"`
 	Detail    string     `db:"detail" json:"detail" type:"string"`
 	Type      string     `db:"type" json:"type" type:"string"`
 	Price     int64      `db:"price" json:"price" type:"int64"`
@@ -16,7 +16,13 @@ type Products struct {
 	UpdatedAt *Timestamp `db:"updated_at" json:"updated_at" type:"timestamp"`
 }
 
-func (p *Products) NewUUID(){
+type Element struct {
+	FailedField string
+	Tag         string
+	Value       string
+}
+
+func (p *Products) NewUUID() {
 	id, _ := uuid.NewV4()
 	p.Id = &id
 }

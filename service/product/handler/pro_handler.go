@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 	"pheet-fiber-backend/auth"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/product"
+	validate "pheet-fiber-backend/service/product/validator"
 	"strconv"
 	"time"
 
@@ -137,11 +140,32 @@ func (h productHandler) GetProductByType(c *fiber.Ctx) error {
 
 func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 	var ctx = c.Context()
-	var newProduct = new(models.Products)
-	var time = models.NewTimestampFromTime(time.Now())
-	err := c.BodyParser(newProduct)
+	var body = c.Body()
+	var params interface{}
+	err := json.Unmarshal(body, &params)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
+	}
+
+	var newProduct = new(models.Products)
+	var time = models.NewTimestampFromTime(time.Now())
+	err = c.BodyParser(newProduct)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError)
+	}
+	ele := validate.ValidateStruct(newProduct)
+	if len(ele) > 0 {
+		for _, val := range ele {
+			if val.FailedField != "" {
+				return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("%s: was missing on body",val.FailedField))
+			}
+			if val.Tag != "" {
+				return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("%s: was missing on body",val.Tag))
+			}
+			if val.Value != "" {
+				return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("%s: was missing on body",val.Value))
+			}
+		}
 	}
 
 	newProduct.NewUUID()

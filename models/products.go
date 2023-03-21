@@ -1,6 +1,9 @@
 package models
 
 import (
+	"pheet-fiber-backend/helper"
+
+	"github.com/go-playground/validator"
 	"github.com/gofrs/uuid"
 )
 
@@ -12,8 +15,8 @@ type Products struct {
 	Type      string     `db:"type" json:"type" type:"string"`
 	Price     int64      `db:"price" json:"price" type:"int64"`
 	Image     string     `db:"cover" json:"image" type:"string"`
-	CreatedAt *Timestamp `db:"created_at" json:"created_at" type:"timestamp"`
-	UpdatedAt *Timestamp `db:"updated_at" json:"updated_at" type:"timestamp"`
+	CreatedAt *helper.Timestamp `db:"created_at" json:"created_at" type:"timestamp"`
+	UpdatedAt *helper.Timestamp `db:"updated_at" json:"updated_at" type:"timestamp"`
 }
 
 type Element struct {
@@ -27,10 +30,39 @@ func (p *Products) NewUUID() {
 	p.Id = &id
 }
 
-func (p *Products) SetCreatedAt(time *Timestamp) {
+func (p *Products) SetCreatedAt(time *helper.Timestamp) {
 	p.CreatedAt = time
 }
 
-func (p *Products) SetUpdatedAt(time *Timestamp) {
+func (p *Products) SetUpdatedAt(time *helper.Timestamp) {
 	p.UpdatedAt = time
+}
+
+func (p *Products) ValidationStruct() error {
+	var validate = validator.New()
+	err := validate.Struct(p)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p *Products) SetImagePath(path string) {
+	p.Image = path
+}
+
+func (p *Products) MergeProduct(existPro *Products) {
+	switch {
+	case p.Name == "":
+		p.Name = existPro.Name
+		fallthrough
+	case p.Detail == "":
+		p.Detail = existPro.Detail
+		fallthrough
+	case p.Price == 0:
+		p.Price = existPro.Price
+		fallthrough
+	case p.Type == "":
+		p.Type = existPro.Type
+	}
 }

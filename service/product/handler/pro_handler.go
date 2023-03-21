@@ -1,15 +1,15 @@
 package handler
 
 import (
-	"encoding/json"
-	"fmt"
 	"net/http"
 	"os"
 	"pheet-fiber-backend/auth"
+	"pheet-fiber-backend/constants"
+	"pheet-fiber-backend/helper"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/product"
-	validate "pheet-fiber-backend/service/product/validator"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -60,7 +60,7 @@ func (h productHandler) Login(c *fiber.Ctx) error {
 func (h productHandler) SignUp(c *fiber.Ctx) error {
 	var ctx = c.Context()
 	var request = new(models.User)
-	var time = models.NewTimestampFromTime(time.Now())
+	var time = helper.NewTimestampFromTime(time.Now())
 	err := c.BodyParser(&request)
 	if err != nil {
 		return c.JSON(err.Error())
@@ -138,57 +138,71 @@ func (h productHandler) GetProductByType(c *fiber.Ctx) error {
 	return c.JSON(resp)
 }
 
-func (h productHandler) CreateProduct(c *fiber.Ctx) error {
+func (p productHandler) Create(c *fiber.Ctx) error {
 	var ctx = c.Context()
-	var body = c.Body()
-	var params interface{}
-	err := json.Unmarshal(body, &params)
+	var err error
+	var imgPath string
+	var proReq = new(models.Products)
+	var time = helper.NewTimestampFromTime(time.Now())
+
+	/* Binding Data && Validation*/
+	if err := c.BodyParser(proReq); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	if err := proReq.ValidationStruct(); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	imgFile, err := c.FormFile("image")
 	if err != nil {
-		c.JSON(http.StatusInternalServerError)
+		return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+			"image": "must be required",
+		})
 	}
 
-	var newProduct = new(models.Products)
-	var time = models.NewTimestampFromTime(time.Now())
-	err = c.BodyParser(newProduct)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError)
-	}
-	ele := validate.ValidateStruct(newProduct)
-	if len(ele) > 0 {
-		for _, val := range ele {
-			if val.FailedField != "" {
-				return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("%s: was missing on body",val.FailedField))
-			}
-			if val.Tag != "" {
-				return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("%s: was missing on body",val.Tag))
-			}
-			if val.Value != "" {
-				return c.Status(http.StatusBadRequest).SendString(fmt.Sprintf("%s: was missing on body",val.Value))
-			}
+	/* Image Management */
+	if imgFile != nil {
+		imgPath = "./uploads/products/" + imgFile.Filename
+		if err := c.SaveFile(imgFile, imgPath); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
 		}
 	}
 
-	newProduct.NewUUID()
-	newProduct.SetCreatedAt(&time)
-	newProduct.SetUpdatedAt(&time)
+	/* Setting id, time and imagePath */
+	proReq.NewUUID()
+	proReq.SetCreatedAt(&time)
+	proReq.SetUpdatedAt(&time)
+	proReq.SetImagePath(imgPath)
 
-	err = h.proSrv.Create(ctx, newProduct)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError)
+	/* Sending Create */
+	if err := p.proSrv.Create(ctx, proReq); err != nil {
+		if strings.Contains(err.Error(), constants.ERROR_PRODUCTNAME_WAS_DUPLICATE) {
+			return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+				"error:": constants.ERROR_PRODUCTNAME_WAS_DUPLICATE,
+			})
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
-	resp := map[string]interface{}{
-		"massage": "product has created.",
+	resp := fiber.Map{
+		"message": "successful",
 	}
 
-	return c.JSON(resp)
+	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
 func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	var ctx = c.Context()
 	var newProduct = new(models.Products)
 	var id = uuid.FromStringOrNil(c.Params("product_id"))
-	var time = models.NewTimestampFromTime(time.Now())
+	var time = helper.NewTimestampFromTime(time.Now())
 
 	err := c.BodyParser(newProduct)
 	if err != nil {

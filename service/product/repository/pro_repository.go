@@ -4,9 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
+	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/product"
+	"strings"
 
 	"github.com/gofrs/uuid"
 	"github.com/jmoiron/sqlx"
@@ -125,7 +126,10 @@ func (r productRepositoryDB) Create(ctx context.Context, product *models.Product
 		product.CreatedAt,
 		product.UpdatedAt,
 	); err != nil {
-		log.Println("err db:", err)
+		if strings.Contains(err.Error(), constants.ERROR_PQ_UNIQUE_PRODUCTNAME) {
+			return errors.New(constants.ERROR_PRODUCTNAME_WAS_DUPLICATE)
+		}
+		return err
 	}
 
 	return tx.Commit()

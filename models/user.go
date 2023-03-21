@@ -1,13 +1,17 @@
 package models
 
-import "github.com/gofrs/uuid"
+import (
+	"pheet-fiber-backend/helper"
+
+	"github.com/gofrs/uuid"
+)
 
 type User struct {
 	Id *uuid.UUID `db:"id" json:"id" type:"uuid"`
 	Username string `db:"username" json:"username" type:"string"`
 	Password string `db:"password" json:"password" type:"string"`
-	CreatedAt *Timestamp `db:"created_at" json:"created_at" type:"timestamp"`
-	UpdatedAt *Timestamp `db:"updated_at" json:"updated_at" type:"timestamp"`
+	CreatedAt *helper.Timestamp `db:"created_at" json:"created_at" type:"timestamp"`
+	UpdatedAt *helper.Timestamp `db:"updated_at" json:"updated_at" type:"timestamp"`
 }
 
 func (p *User) NewUUID(){
@@ -15,10 +19,10 @@ func (p *User) NewUUID(){
 	p.Id = &id
 }
 
-func (p *User) SetCreatedAt(time *Timestamp) {
+func (p *User) SetCreatedAt(time *helper.Timestamp) {
 	p.CreatedAt = time
 }
 
-func (p *User) SetUpdatedAt(time *Timestamp) {
+func (p *User) SetUpdatedAt(time *helper.Timestamp) {
 	p.UpdatedAt = time
 }

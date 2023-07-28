@@ -1,58 +1,95 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"log"
 	"os"
-	"pheet-fiber-backend/auth"
+	"os/signal"
+	"pheet-fiber-backend/config"
+	"pheet-fiber-backend/migrations/database"
 	"pheet-fiber-backend/route"
-	"pheet-fiber-backend/service/product/handler"
-	"pheet-fiber-backend/service/product/repository"
-	service "pheet-fiber-backend/service/product/usecase"
+
+	_product_repo "pheet-fiber-backend/service/product/repository"
+	_product_usecase "pheet-fiber-backend/service/product/usecase"
+	_product_handler "pheet-fiber-backend/service/product/handler"
+
+	_middle_repo "pheet-fiber-backend/middleware/repository"
+	_middle_usecase "pheet-fiber-backend/middleware/usecase"
+	_middle_handler "pheet-fiber-backend/middleware/handler"
+
+	_monitor_handler "pheet-fiber-backend/service/monitor/handler"
+	
+
+	validate "pheet-fiber-backend/service/product/validator"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	_ "github.com/lib/pq"
-
-	"github.com/jmoiron/sqlx"
-	"github.com/joho/godotenv"
 )
 
+func envPath() string {
+	if len(os.Args) == 1 {
+		return ".env"
+	} else {
+		return os.Args[1]
+	}
+}
 
 func main() {
-	var err error
-	err = godotenv.Load(".env") /*Load Env*/
-	if err != nil {
-		log.Printf("please consider environment variable: %s", err)
-	}
+	var ctx = context.Background()
+	var cfg = config.LoadConfig(envPath())
+	var psqlDB = database.DBConnect(ctx, cfg.Db())
+	defer psqlDB.Close()
 
-	psqlDB, err := sqlx.Open("postgres", os.Getenv("PSQL_DATABASE_URL"))
-	if err != nil {
-		panic(err)
-	}
+	/* Init Repository */
+	proRepo := _product_repo.NewProductRepository(psqlDB)
+	midRepo := _middle_repo.NewMiddlewareRepository(psqlDB)
 
-	proRepo := repository.NewProductRepository(psqlDB)
-	proService := service.NewProductUsecase(proRepo)
-	proHandler := handler.NewProductHandler(proService)
+	/* Init Usecase */
+	proService := _product_usecase.NewProductUsecase(proRepo)
+	midUs := _middle_usecase.NewMiddlewareUsecase(midRepo)
 
-	err = psqlDB.Ping()
-	if err != nil {
-		log.Println(err)
-	}
+	/* Init Handler */
+	proHandler := _product_handler.NewProductHandler(proService)
+	midHandler := _middle_handler.NewMiddlewareHandler(cfg, midUs)
+	monHandler := _monitor_handler.NewMonitorHandler(cfg)
 
-	app := *fiber.New()
-	app.Use(cors.New())
-	app.Static("/uploads", "./uploads")
+	/* Init Validator */
+	var validate = validate.Validation{}
 
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Bizcuitware Web!!!")
+
+	/* Fiber server */
+	app := fiber.New(fiber.Config{
+		AppName:      cfg.App().Name(),
+		BodyLimit:    cfg.App().BodyLimit(),
+		ReadTimeout:  cfg.App().ReadTimeOut(),
+		WriteTimeout: cfg.App().WriteTimeOut(),
+		JSONEncoder:  json.Marshal,
+		JSONDecoder:  json.Unmarshal,
 	})
 
-	app.Post("/register", proHandler.SignUp)
-	app.Post("/login", proHandler.Login)
+	/* middleware */
+	app.Use(midHandler.Cors())
 
-	productGroup := app.Group("", auth.Protect([]byte(os.Getenv("SIGN"))))
-	r := route.NewRoute(productGroup)
-	r.RegisterProduct(proHandler)
+	/* HealthCheck Service */
+	app.Get("/", monHandler.HealthCheck)
 
-	app.Listen(os.Getenv("PORT"))
+
+	v1 := app.Group("v1")
+	r := route.NewRoute(v1)
+
+	r.RegisterProduct(proHandler, validate)
+
+	// Graceful Shutdown
+	var c = make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	go func ()  {
+		_ = <-c
+		log.Println("Server is shutting down...")
+		_ = app.Shutdown()
+	}()
+
+	//Listen to host:port
+	log.Printf("Server is starting on %v", cfg.App().Url())
+	app.Listen(cfg.App().Url())
 }

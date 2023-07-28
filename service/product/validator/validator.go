@@ -8,6 +8,8 @@ import (
 
 var validate = validator.New()
 
+type Validation struct{}
+
 func ValidateStruct(pro *models.Products) []*models.Element {
 	var errors = make([]*models.Element, 0)
 	err := validate.Struct(pro)

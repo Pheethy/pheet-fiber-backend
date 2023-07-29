@@ -19,7 +19,6 @@ import (
 	_middle_handler "pheet-fiber-backend/middleware/handler"
 
 	_monitor_handler "pheet-fiber-backend/service/monitor/handler"
-	
 
 	validate "pheet-fiber-backend/service/product/validator"
 
@@ -74,7 +73,6 @@ func main() {
 
 	/* HealthCheck Service */
 	app.Get("/", monHandler.HealthCheck)
-
 
 	v1 := app.Group("v1")
 	r := route.NewRoute(v1)

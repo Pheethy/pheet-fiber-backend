@@ -10,7 +10,7 @@ import (
 
 func InitLogger(c *fiber.Ctx, resp any) logger.ILogger {
 	log := &models.Logger{
-		Time: time.Now().Local().Format("2006-10-02 18:00:00"),
+		Time: time.Now().Local().Format("2006-01-02 18:00:00"),
 		Ip: c.IP(),
 		Method: c.Method(),
 		StatusCode: c.Response().StatusCode(),

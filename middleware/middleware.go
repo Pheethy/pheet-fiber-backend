@@ -1,5 +1,8 @@
 package middleware
 
-type IMiddleware interface {
+import "github.com/gofiber/fiber/v2"
 
+type ImiddlewareHandler interface {
+	Cors() fiber.Handler
+	Logger() fiber.Handler
 }

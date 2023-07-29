@@ -51,7 +51,7 @@ func main() {
 
 	/* Init Handler */
 	proHandler := _product_handler.NewProductHandler(proService)
-	midHandler := _middle_handler.NewMiddlewareHandler(cfg, midUs)
+	middleware := _middle_handler.NewMiddlewareHandler(cfg, midUs)
 	monHandler := _monitor_handler.NewMonitorHandler(cfg)
 
 	/* Init Validator */
@@ -69,7 +69,8 @@ func main() {
 	})
 
 	/* middleware */
-	app.Use(midHandler.Cors())
+	app.Use(middleware.Cors())
+	app.Use(middleware.Logger())
 
 	/* HealthCheck Service */
 	app.Get("/", monHandler.HealthCheck)

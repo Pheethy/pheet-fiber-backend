@@ -7,8 +7,6 @@ import (
 	"pheet-fiber-backend/service/monitor"
 
 	"github.com/gofiber/fiber/v2"
-
-	_logger_handler "pheet-fiber-backend/service/logger/handler"
 )
 
 type monitorHandler struct {
@@ -23,12 +21,9 @@ func NewMonitorHandler(cfg config.Iconfig) monitor.IMonitorHandler {
 
 func (m monitorHandler) HealthCheck(c *fiber.Ctx) error {
 	resp := models.Monitor{
-		Name: m.cfg.App().Name(),
+		Name:    m.cfg.App().Name(),
 		Version: m.cfg.App().Version(),
 	}
-
-	log := _logger_handler.InitLogger(c, resp)
-	log.Save()
 
 	return c.Status(http.StatusOK).JSON(resp)
 }

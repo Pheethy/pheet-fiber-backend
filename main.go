@@ -70,7 +70,7 @@ func main() {
 	/* middleware */
 	app.Use(middleware.Cors())
 	app.Use(middleware.Logger())
-
+	
 	/* HealthCheck Service */
 	app.Get("/", monHandler.HealthCheck)
 

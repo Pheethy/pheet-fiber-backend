@@ -23,7 +23,7 @@ type UserRegisterReq struct {
 func (u *UserRegisterReq) BcryptHashing() error {
 	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), 10)
 	if err != nil {
-		return fmt.Errorf("Hashing Password Failed: %v", err)
+		return fmt.Errorf("Hashing Password Failed: %w", err)
 	}
 
 	u.Password = string(hash)
@@ -44,6 +44,7 @@ type UserPassport struct {
 }
 
 type UserToken struct {
-	Id          string `json:"id" db:"id"`
-	AccessToken string `json:"access_token" db:"access_token"`
+	Id           string `json:"id" db:"id"`
+	AccessToken  string `json:"access_token" db:"access_token"`
+	RefreshToken string `json:"refresh_token" db:"refresh_token"`
 }

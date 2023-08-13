@@ -106,12 +106,13 @@ func (h productHandler) GetProducts(c *fiber.Ctx) error {
 }
 
 func (h productHandler) GetProductById(c *fiber.Ctx) error {
+	var ctx = c.Context()
 	id, err := strconv.Atoi(c.Params("id"))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}
 
-	product, err := h.proSrv.GetProduct(id)
+	product, err := h.proSrv.GetProduct(ctx, id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError)
 	}

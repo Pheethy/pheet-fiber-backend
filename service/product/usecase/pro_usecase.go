@@ -21,8 +21,8 @@ func (r productUsecase)GetProducts(ctx context.Context)([]*models.Products,error
 	return r.productRepo.FetchAll(ctx)	
 }
 
-func (r productUsecase)GetProduct(id int)(*models.Products, error){
-	return r.productRepo.FetchById(id)
+func (r productUsecase)GetProduct(ctx context.Context, id int)(*models.Products, error){
+	return r.productRepo.FetchById(ctx, id)
 }
 
 func (r productUsecase)GetUser(username string)(*models.User, error){

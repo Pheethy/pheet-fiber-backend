@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/product"
@@ -56,7 +57,7 @@ func (r productRepositoryDB) FetchByType(coffType string) ([]*models.Products, e
 	return products, nil
 }
 
-func (r productRepositoryDB) FetchById(id int) (*models.Products, error) {
+func (r productRepositoryDB) FetchById(ctx context.Context, id int) (*models.Products, error) {
 	sql := `
 	SELECT
 		id, name, type, price, description, image
@@ -66,10 +67,20 @@ func (r productRepositoryDB) FetchById(id int) (*models.Products, error) {
 		id=?
 	`
 	var product models.Products
-	err := r.psqlDB.Get(&product, sql, id)
+	stmt, err := r.psqlDB.PrepareContext(ctx, sql)
 	if err != nil {
 		return nil, err
 	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryContext(ctx, id)
+	if err != nil {
+		log.Fatalf("Error FetchById: %v", err)
+		return nil, errors.New("Can't Fetch By Id")
+	}
+
+	_ = rows
+	
 
 	return &product, nil
 }

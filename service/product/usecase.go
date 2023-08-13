@@ -10,7 +10,7 @@ import (
 //* สร้าง pod interface กำหนดว่ามี service อะไรให้ใช้บ้าง*//
 type ProductUsecase interface{
 	GetProducts(ctx context.Context)([]*models.Products,error)
-	GetProduct(id int)(*models.Products, error)
+	GetProduct(ictx context.Context, id int)(*models.Products, error)
 	GetProductByType(coffType string)([]*models.Products, error)
 	GetUser(username string)(*models.User, error)
 	Create(ctx context.Context, product *models.Products) error

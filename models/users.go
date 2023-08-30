@@ -16,7 +16,7 @@ type Users struct {
 
 type UserRegisterReq struct {
 	Email    string `json:"email" db:"email"`
-	UserName string `json:"username" db:"username"`
+	Username string `json:"username" db:"username"`
 	Password string `json:"password" db:"password"`
 }
 

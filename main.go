@@ -10,17 +10,15 @@ import (
 	"pheet-fiber-backend/migrations/database"
 	"pheet-fiber-backend/route"
 
-	_product_repo "pheet-fiber-backend/service/product/repository"
-	_product_usecase "pheet-fiber-backend/service/product/usecase"
-	_product_handler "pheet-fiber-backend/service/product/handler"
-
+	_middle_handler "pheet-fiber-backend/middleware/handler"
 	_middle_repo "pheet-fiber-backend/middleware/repository"
 	_middle_usecase "pheet-fiber-backend/middleware/usecase"
-	_middle_handler "pheet-fiber-backend/middleware/handler"
 
 	_monitor_handler "pheet-fiber-backend/service/monitor/handler"
 
-	validate "pheet-fiber-backend/service/product/validator"
+	_users_handler "pheet-fiber-backend/service/users/handlers"
+	_users_repo "pheet-fiber-backend/service/users/repository"
+	_users_usecase "pheet-fiber-backend/service/users/usecase"
 
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
@@ -41,21 +39,19 @@ func main() {
 	defer psqlDB.Close()
 
 	/* Init Repository */
-	proRepo := _product_repo.NewProductRepository(psqlDB)
 	midRepo := _middle_repo.NewMiddlewareRepository(psqlDB)
+	userRepo := _users_repo.NewUsersRepository(psqlDB)
 
 	/* Init Usecase */
-	proService := _product_usecase.NewProductUsecase(proRepo)
 	midUs := _middle_usecase.NewMiddlewareUsecase(midRepo)
+	userUs := _users_usecase.NewUsersUsecase(cfg, userRepo)
 
 	/* Init Handler */
-	proHandler := _product_handler.NewProductHandler(proService)
 	middleware := _middle_handler.NewMiddlewareHandler(cfg, midUs)
 	monHandler := _monitor_handler.NewMonitorHandler(cfg)
+	userHandler := _users_handler.NewUsersHandler(cfg, userUs)
 
 	/* Init Validator */
-	var validate = validate.Validation{}
-
 
 	/* Fiber server */
 	app := fiber.New(fiber.Config{
@@ -70,19 +66,19 @@ func main() {
 	/* middleware */
 	app.Use(middleware.Cors())
 	app.Use(middleware.Logger())
-	
+
 	/* HealthCheck Service */
 	app.Get("/", monHandler.HealthCheck)
+	
+	router := app.Group("v1")
+	r := route.NewRoute(router)
 
-	v1 := app.Group("v1")
-	r := route.NewRoute(v1)
-
-	r.RegisterProduct(proHandler, validate)
+	r.RegisterUsers(userHandler)
 
 	// Graceful Shutdown
 	var c = make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
-	go func ()  {
+	go func() {
 		_ = <-c
 		log.Println("Server is shutting down...")
 		_ = app.Shutdown()

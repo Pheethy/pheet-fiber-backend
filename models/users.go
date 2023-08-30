@@ -15,9 +15,9 @@ type Users struct {
 }
 
 type UserRegisterReq struct {
-	Email    string `json:"email" db:"email"`
-	Username string `json:"username" db:"username"`
-	Password string `json:"password" db:"password"`
+	Email    string `json:"email" db:"email" form:"email"`
+	Username string `json:"username" db:"username" form:"username"`
+	Password string `json:"password" db:"password" form:"password"`
 }
 
 func (u *UserRegisterReq) BcryptHashing() error {
@@ -31,7 +31,7 @@ func (u *UserRegisterReq) BcryptHashing() error {
 }
 
 func (u *UserRegisterReq) IsEmail() bool {
-	match, err := regexp.MatchString(`^[\w-I.]+@(Ew-J+1.)+[\w-](2,4)$`, u.Password)
+	match, err := regexp.MatchString(`^[\w\-.]+@([\w\-]+\.)+[\w\-]{2,4}$`, u.Email)
 	if err != nil {
 		return false
 	}

@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"pheet-fiber-backend/config"
+	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/users"
 )
 
@@ -15,4 +16,13 @@ func NewUsersUsecase(cfg config.Iconfig, usersRepo users.IUsersRepository) users
 		cfg: cfg,
 		usersRepo: usersRepo,
 	}
+}
+
+func (u usersUsecase) InsertCustomer(userReq *models.UserRegisterReq) (*models.UserPassport, error) {
+	// Hashing a password
+	if err := userReq.BcryptHashing(); err != nil {
+		return nil, err
+	}
+	
+	return u.usersRepo.InsertUser(userReq, false)
 }

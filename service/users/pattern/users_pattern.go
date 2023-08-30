@@ -147,5 +147,6 @@ func (f *userReq) Result() (*models.UserPassport, error) {
 	if err := json.Unmarshal(data, &user); err != nil {
 		return nil, fmt.Errorf("unmarshal user failed: %v", err)
 	}
+
 	return user, nil
 }

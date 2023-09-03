@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/users"
@@ -42,4 +43,26 @@ func (u usersRepository) InsertUser(userReq *models.UserRegisterReq, isAdmin boo
 	}
 
 	return user, err
+}
+
+func (u usersRepository) FindOneUserByEmail(ctx context.Context, email string) (*models.UserCredentialCheck, error) {
+	sql := `
+		SELECT
+			id,
+			username,
+			password,
+			email,
+			role_id
+		FROM 
+			"users"
+		WHERE
+			"email" = $1
+	`
+
+	var uCredential = new(models.UserCredentialCheck)
+	if err := u.psqlDB.GetContext(ctx, uCredential, sql, email); err != nil {
+		return nil, err
+	}
+
+	return uCredential, nil
 }

@@ -38,3 +38,22 @@ func (u usersHandlers) SignUpCustomer(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(userPass)
 }
+
+func (u usersHandlers) GetPassport(c *fiber.Ctx) error {
+	var ctx = c.Context()
+	var userReq = new(models.UserCredential)
+	if err := c.BodyParser(userReq); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	userPass, err := u.usersUs.GetPassport(ctx, userReq)
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	resp := map[string]interface{}{
+		"user": userPass,
+	}
+
+	return c.Status(http.StatusOK).JSON(resp)
+}

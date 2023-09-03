@@ -18,3 +18,12 @@ const (
 	ERROR_UNIQUE_ORGANIZE_NAME       = "pq: duplicate key value violates unique constraint \"unique_organize_name\""
 	ERROR_UNIQUE_ORGANIZE_ALIAS_NAME = "pq: duplicate key value violates unique constraint \"unique_organize_alias_name\""
 )
+
+type TokenType string
+
+const (
+	Access  TokenType = "access"
+	Refresh TokenType = "refresh"
+	Admin   TokenType = "admin"
+	APIKey  TokenType = "apikey"
+)

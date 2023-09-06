@@ -15,6 +15,6 @@ func NewRoute(e fiber.Router) *Route {
 }
 
 func (r Route) RegisterUsers(handler users.IUsersHandlers) {
-	r.e.Get("/passport", handler.GetPassport)
+	r.e.Post("/passport", handler.GetPassport)
 	r.e.Post("/signup/customer", handler.SignUpCustomer)
 }

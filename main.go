@@ -41,7 +41,6 @@ func main() {
 	/* Init Repository */
 	midRepo := _middle_repo.NewMiddlewareRepository(psqlDB)
 	userRepo := _users_repo.NewUsersRepository(psqlDB)
-
 	/* Init Usecase */
 	midUs := _middle_usecase.NewMiddlewareUsecase(midRepo)
 	userUs := _users_usecase.NewUsersUsecase(cfg, userRepo)

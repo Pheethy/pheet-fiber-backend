@@ -4,8 +4,11 @@ import (
 	"context"
 	"fmt"
 	"pheet-fiber-backend/config"
+	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/users"
+
+	_auth_service "pheet-fiber-backend/auth/service"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -43,6 +46,23 @@ func (u usersUsecase) GetPassport(ctx context.Context, req *models.UserCredentia
 		return nil, fmt.Errorf("password is invalid: %v", err)
 	}
 
+	//Access Token
+	access, err := _auth_service.NewAuthService(constants.Access, u.cfg.Jwt(), &models.UserClaims{
+		Id: user.Id,
+		RoleId: user.RoleId,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("")
+	}
+	// Refresh Token
+	refresh, err := _auth_service.NewAuthService(constants.Refresh, u.cfg.Jwt(), &models.UserClaims{
+		Id: user.Id,
+		RoleId: user.RoleId,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("")
+	}
+
 	//Cast user to userPassport
 	userPass := &models.UserPassport{
 		User: &models.Users{
@@ -51,8 +71,15 @@ func (u usersUsecase) GetPassport(ctx context.Context, req *models.UserCredentia
 			UserName: user.Username,
 			RoleId:   user.RoleId,
 		},
-		Token: nil,
+		Token: &models.UserToken{
+			AccessToken:  access.SignToken(),
+			RefreshToken: refresh.SignToken(),
+		},
 	}
 
+	if err := u.usersRepo.InsertOauth(ctx, userPass); err != nil {
+		return nil, err
+	}
+	
 	return userPass, nil
 }

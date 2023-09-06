@@ -66,3 +66,30 @@ func (u usersRepository) FindOneUserByEmail(ctx context.Context, email string) (
 
 	return uCredential, nil
 }
+
+func (u usersRepository) InsertOauth(ctx context.Context, req *models.UserPassport) error {
+	sql := `
+		INSERT INTO "oauth" (
+			"user_id",
+			"access_token",
+			"refresh_token"
+		)
+		VALUES (
+			$1,
+			$2,
+			$3
+		)
+		RETURNING "id";
+	`
+	if err := u.psqlDB.QueryRowContext(
+			ctx, 
+			sql,
+			req.User.Id,
+			req.Token.AccessToken,
+			req.Token.RefreshToken,
+	).Scan(&req.Token.Id); err != nil {
+		return fmt.Errorf("insert oauth failed: %v", err)
+	}
+
+	return nil
+}

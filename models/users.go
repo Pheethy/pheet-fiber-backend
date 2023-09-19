@@ -66,3 +66,11 @@ type UserClaims struct {
 	Id string `json:"id" db:"id"`
 	RoleId int `json:"role_id" db:"role_id"`
 }
+
+type UserRefreshCredential struct {
+	RefreshToken string `json:"refresh_token" form:"refresh_token"`
+}
+
+type UserRemoveCredential struct {
+	OauthId string `json:"oauth_id" db:"id" form:"oauth_id"`
+}

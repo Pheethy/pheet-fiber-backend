@@ -69,10 +69,10 @@ func main() {
 	/* HealthCheck Service */
 	app.Get("/", monHandler.HealthCheck)
 	
-	router := app.Group("v1")
+	router := app.Group("users")
 	r := route.NewRoute(router)
 
-	r.RegisterUsers(userHandler)
+	r.RegisterUsers(userHandler, middleware)
 
 	// Graceful Shutdown
 	var c = make(chan os.Signal, 1)

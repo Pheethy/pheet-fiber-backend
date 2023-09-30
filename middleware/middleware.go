@@ -7,4 +7,5 @@ type ImiddlewareHandler interface {
 	Logger() fiber.Handler
 	JwtAuth() fiber.Handler
 	ParamsCheck() fiber.Handler
+	Authorize(expectedRoleId ...int) fiber.Handler
 }

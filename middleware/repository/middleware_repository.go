@@ -8,6 +8,7 @@ import (
 
 type ImiddlewareRepository interface {
 	FindAccessToken(userId, accessToken string) bool
+	FindRole() ([]*models.Role, error)
 }
 
 type middlewareRepository struct {

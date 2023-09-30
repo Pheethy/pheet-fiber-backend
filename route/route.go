@@ -20,6 +20,6 @@ func (r Route) RegisterUsers(handler users.IUsersHandlers, m middleware.Imiddlew
 	r.e.Post("/sign-up", handler.SignUpCustomer)
 	r.e.Post("/sign-out", handler.SignOut)
 	r.e.Post("/refresh", handler.RefreshPassport)
-	r.e.Get("/secret", handler.GenerateAdminToken, m.JwtAuth())
+	r.e.Get("/secret",m.JwtAuth(), m.Authorize(2), handler.GenerateAdminToken)
 	r.e.Get("/:user_id", m.JwtAuth(), m.ParamsCheck(), handler.FetchUserProfile)
 }

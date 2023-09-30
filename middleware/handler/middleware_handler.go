@@ -6,6 +6,7 @@ import (
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/middleware"
 	"pheet-fiber-backend/middleware/usecase"
+	"pheet-fiber-backend/service/utils"
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
@@ -72,5 +73,39 @@ func (m middlewareHandler) ParamsCheck() fiber.Handler {
 			return fiber.NewError(http.StatusBadRequest, "never gonna give you up")
 		}
 		return c.Next()
+	}
+}
+
+func (m middlewareHandler) Authorize(expectedRoleId ...int) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		userRoleId, ok := c.Locals("role_id").(int)
+		if !ok {
+			return fiber.NewError(http.StatusUnprocessableEntity, "cast role_id to int failed.")
+		}
+
+		roles, err := m.middleUs.FindRole()
+		if err != nil {
+			return fiber.NewError(http.StatusInternalServerError, err.Error())
+		}
+
+
+		sum := 0
+		for _, val := range expectedRoleId {
+			sum += val
+		}
+
+		expectedValBinary := utils.ConvertBinary(sum , len(roles))
+		userValBinary := utils.ConvertBinary(userRoleId, len(roles))
+		
+
+
+		for index := range userValBinary {
+			if userValBinary[index]&expectedValBinary[index] == 1 {
+				return c.Next()
+			}
+		}
+		
+
+		return fiber.NewError(http.StatusUnauthorized)
 	}
 }

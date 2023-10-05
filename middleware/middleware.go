@@ -8,4 +8,5 @@ type ImiddlewareHandler interface {
 	JwtAuth() fiber.Handler
 	ParamsCheck() fiber.Handler
 	Authorize(expectedRoleId ...int) fiber.Handler
+	ApiKeyAuth() fiber.Handler
 }

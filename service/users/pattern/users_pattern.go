@@ -8,7 +8,7 @@ import (
 	"pheet-fiber-backend/service/users"
 	"time"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/BlackMocca/sqlx"
 )
 
 type userReq struct {

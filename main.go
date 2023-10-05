@@ -78,7 +78,7 @@ func main() {
 
 	/* HealthCheck Service */
 	app.Get("/", monHandler.HealthCheck)
-	
+
 	router := app.Group("")
 	r := route.NewRoute(router)
 

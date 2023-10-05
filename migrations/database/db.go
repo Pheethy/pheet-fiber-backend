@@ -5,7 +5,7 @@ import (
 	"log"
 	"pheet-fiber-backend/config"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/BlackMocca/sqlx"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 

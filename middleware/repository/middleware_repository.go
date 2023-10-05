@@ -3,7 +3,7 @@ package repository
 import (
 	"pheet-fiber-backend/models"
 
-	"github.com/jmoiron/sqlx"
+	"github.com/BlackMocca/sqlx"
 )
 
 type ImiddlewareRepository interface {

@@ -4,6 +4,7 @@ go 1.19
 
 require (
 	4d63.com/tz v1.2.0
+	github.com/BlackMocca/sqlx v1.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/gofiber/fiber/v2 v2.41.0
 	github.com/gofrs/uuid v4.4.0+incompatible
@@ -11,7 +12,7 @@ require (
 	github.com/jackc/pgx/v5 v5.4.2
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.4.0
-	github.com/lib/pq v1.2.0
+	github.com/lib/pq v1.10.7
 	golang.org/x/crypto v0.9.0
 )
 

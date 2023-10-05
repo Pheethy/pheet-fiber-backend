@@ -109,3 +109,13 @@ func (m middlewareHandler) Authorize(expectedRoleId ...int) fiber.Handler {
 		return fiber.NewError(http.StatusUnauthorized)
 	}
 }
+
+func (m middlewareHandler) ApiKeyAuth() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var key = c.Get("X-API-KEY")
+		if _, err := _auth_service.ParseApiKey(m.cfg.Jwt(), key); err != nil {
+			return fiber.NewError(http.StatusInternalServerError, "API-KEY is invalid.")
+		}
+		return c.Next()
+	}
+}

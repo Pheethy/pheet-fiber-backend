@@ -3,7 +3,6 @@ package service
 import (
 	"errors"
 	"fmt"
-	"log"
 	"math"
 	"pheet-fiber-backend/auth"
 	"pheet-fiber-backend/config"
@@ -130,7 +129,6 @@ func RepeatToken(cfg config.IJwtConfig, claims *models.UserClaims, exp int64) st
 }
 
 func newAccessToken(cfg config.IJwtConfig, claims *models.UserClaims) auth.ServiceAuth {
-	log.Println("exAcc", cfg.AccessExpiresAt())
 	return &serviceAuth{
 		cfg: cfg,
 		mapClaims: &models.MapClaims{
@@ -148,7 +146,6 @@ func newAccessToken(cfg config.IJwtConfig, claims *models.UserClaims) auth.Servi
 }
 
 func newRefreshToken(cfg config.IJwtConfig, claims *models.UserClaims) auth.ServiceAuth {
-	log.Println("exRefresh", cfg.RefreshExpiresAt())
 	return &serviceAuth{
 		cfg: cfg,
 		mapClaims: &models.MapClaims{

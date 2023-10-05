@@ -20,6 +20,10 @@ import (
 	_users_repo "pheet-fiber-backend/service/users/repository"
 	_users_usecase "pheet-fiber-backend/service/users/usecase"
 
+	_appinfo_handler "pheet-fiber-backend/service/appinfo/handler"
+	_appinfo_repo "pheet-fiber-backend/service/appinfo/repository"
+	_appinfo_usecase "pheet-fiber-backend/service/appinfo/usecase"
+
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
 )
@@ -41,14 +45,20 @@ func main() {
 	/* Init Repository */
 	midRepo := _middle_repo.NewMiddlewareRepository(psqlDB)
 	userRepo := _users_repo.NewUsersRepository(psqlDB)
+	infoRepo := _appinfo_repo.NewAppInfoRepository(psqlDB)
+
 	/* Init Usecase */
 	midUs := _middle_usecase.NewMiddlewareUsecase(midRepo)
 	userUs := _users_usecase.NewUsersUsecase(cfg, userRepo)
+	infoUs := _appinfo_usecase.NewAppInfoUsecase(cfg, infoRepo)
 
 	/* Init Handler */
 	middleware := _middle_handler.NewMiddlewareHandler(cfg, midUs)
 	monHandler := _monitor_handler.NewMonitorHandler(cfg)
 	userHandler := _users_handler.NewUsersHandler(cfg, userUs)
+	infoHandler := _appinfo_handler.NewAppInfoHandler(cfg, infoUs)
+
+	_ = infoHandler
 
 	/* Init Validator */
 
@@ -69,10 +79,12 @@ func main() {
 	/* HealthCheck Service */
 	app.Get("/", monHandler.HealthCheck)
 	
-	router := app.Group("users")
+	router := app.Group("/")
 	r := route.NewRoute(router)
 
+	/* Init Routing */
 	r.RegisterUsers(userHandler, middleware)
+	r.RegisterAppInfo(infoHandler, middleware)
 
 	// Graceful Shutdown
 	var c = make(chan os.Signal, 1)

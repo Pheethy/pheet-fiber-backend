@@ -2,6 +2,7 @@ package route
 
 import (
 	"pheet-fiber-backend/middleware"
+	"pheet-fiber-backend/service/appinfo"
 	"pheet-fiber-backend/service/users"
 
 	"github.com/gofiber/fiber/v2"
@@ -16,10 +17,14 @@ func NewRoute(e fiber.Router) *Route {
 }
 
 func (r Route) RegisterUsers(handler users.IUsersHandlers, m middleware.ImiddlewareHandler) {
-	r.e.Post("/sign-in", handler.GetPassport)
-	r.e.Post("/sign-up", handler.SignUpCustomer)
-	r.e.Post("/sign-out", handler.SignOut)
-	r.e.Post("/refresh", handler.RefreshPassport)
-	r.e.Get("/secret",m.JwtAuth(), m.Authorize(2), handler.GenerateAdminToken)
-	r.e.Get("/:user_id", m.JwtAuth(), m.ParamsCheck(), handler.FetchUserProfile)
+	r.e.Post("users/sign-in", handler.GetPassport)
+	r.e.Post("users/sign-up", handler.SignUpCustomer)
+	r.e.Post("users/sign-out", handler.SignOut)
+	r.e.Post("users/refresh", handler.RefreshPassport)
+	r.e.Get("users/secret",m.JwtAuth(), m.Authorize(2), handler.GenerateAdminToken)
+	r.e.Get("users/:user_id", m.JwtAuth(), m.ParamsCheck(), handler.FetchUserProfile)
+}
+
+func (r Route) RegisterAppInfo(handler appinfo.AppInfoHandler, m middleware.ImiddlewareHandler) {
+
 }

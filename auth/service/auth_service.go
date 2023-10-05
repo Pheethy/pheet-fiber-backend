@@ -22,6 +22,10 @@ type adminAuth struct {
 	*serviceAuth
 }
 
+type apiKey struct {
+	*serviceAuth
+}
+
 func NewAuthService(tokenType constants.TokenType, cfg config.IJwtConfig, claims *models.UserClaims) (auth.ServiceAuth, error) {
 	switch tokenType {
 	case constants.Access:
@@ -30,6 +34,8 @@ func NewAuthService(tokenType constants.TokenType, cfg config.IJwtConfig, claims
 		return newRefreshToken(cfg, claims), nil
 	case constants.Admin:
 		return newAdminToken(cfg), nil
+	case constants.APIKey:
+		return newApiKeyToken(cfg), nil
 	default:
 		return nil, fmt.Errorf("unkwon token type")
 	}
@@ -43,7 +49,13 @@ func (a *serviceAuth) SignToken() string {
 
 func (a *adminAuth) SignToken() string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, a.mapClaims)
-	ss, _ := token.SignedString(a.cfg.SecretKey())
+	ss, _ := token.SignedString(a.cfg.AdminKey())
+	return ss
+}
+
+func (a *apiKey) SignToken() string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, a.mapClaims)
+	ss, _ := token.SignedString(a.cfg.ApiKey())
 	return ss
 }
 
@@ -80,6 +92,33 @@ func ParseAdminToken(cfg config.IJwtConfig, tokenString string) (*models.MapClai
 			return nil, fmt.Errorf("signing method is invalid.")
 		}
 		return cfg.AdminKey(), nil
+	})
+
+	//handler error
+	if err != nil {
+		// checkFormToken && checkExpired
+		if errors.Is(err, jwt.ErrTokenMalformed) {
+			return nil, fmt.Errorf("token format is invalid.")
+		} else if errors.Is(err, jwt.ErrTokenExpired) {
+			return nil, fmt.Errorf("token was expired.")
+		} else {
+			return nil, fmt.Errorf("parse token failed: %v", err)
+		}
+	}
+
+	if claims, ok := token.Claims.(*models.MapClaims); ok {
+		return claims, nil
+	} else {
+		return nil, fmt.Errorf("claims type is invalid")
+	}
+}
+
+func ParseApiKey(cfg config.IJwtConfig, tokenString string) (*models.MapClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &models.MapClaims{}, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("signing method is invalid.")
+		}
+		return cfg.ApiKey(), nil
 	})
 
 	//handler error
@@ -173,6 +212,25 @@ func newAdminToken(cfg config.IJwtConfig) auth.ServiceAuth {
 					Subject:   "admin-token",
 					Audience:  []string{"admin"},
 					ExpiresAt: jwtTimeDurationCal(300),
+					NotBefore: jwt.NewNumericDate(time.Now()),
+					IssuedAt:  jwt.NewNumericDate(time.Now()),
+				},
+			},
+		},
+	}
+}
+
+func newApiKeyToken(cfg config.IJwtConfig) auth.ServiceAuth {
+	return &apiKey{
+		&serviceAuth{
+			cfg: cfg,
+			mapClaims: &models.MapClaims{
+				Claims: nil,
+				RegisteredClaims: jwt.RegisteredClaims{
+					Issuer:    "pheet-shop-api",
+					Subject:   "api-key",
+					Audience:  []string{"admin", "customer"},
+					ExpiresAt: jwt.NewNumericDate(time.Now().AddDate(2, 0, 0)),
 					NotBefore: jwt.NewNumericDate(time.Now()),
 					IssuedAt:  jwt.NewNumericDate(time.Now()),
 				},

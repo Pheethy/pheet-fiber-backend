@@ -7,3 +7,6 @@ type ServiceAuth interface {
 type AdminAuth interface {
 	SignToken() string
 }
+type ApiKey interface {
+	SignToken() string
+}

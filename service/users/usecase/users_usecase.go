@@ -19,7 +19,7 @@ type usersUsecase struct {
 }
 
 func NewUsersUsecase(cfg config.Iconfig, usersRepo users.IUsersRepository) users.IUsersUsecase {
-	return usersUsecase{
+	return &usersUsecase{
 		cfg:       cfg,
 		usersRepo: usersRepo,
 	}

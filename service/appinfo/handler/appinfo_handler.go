@@ -19,7 +19,7 @@ type appInfoHandler struct {
 }
 
 func NewAppInfoHandler(cfg config.Iconfig, infoUs appinfo.AppInfoUsecase) appinfo.AppInfoHandler {
-	return appInfoHandler{
+	return &appInfoHandler{
 		cfg:    cfg,
 		infoUs: infoUs,
 	}

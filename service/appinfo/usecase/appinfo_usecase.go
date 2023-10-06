@@ -14,7 +14,7 @@ type appInfoUsecase struct {
 }
 
 func NewAppInfoUsecase(cfg config.Iconfig, infoRepo appinfo.AppInfoRepository) appinfo.AppInfoUsecase {
-	return appInfoUsecase{
+	return &appInfoUsecase{
 		cfg: cfg,
 		infoRepo: infoRepo,
 	}

@@ -23,6 +23,9 @@ import (
 	_appinfo_handler "pheet-fiber-backend/service/appinfo/handler"
 	_appinfo_repo "pheet-fiber-backend/service/appinfo/repository"
 	_appinfo_usecase "pheet-fiber-backend/service/appinfo/usecase"
+	
+	_file_handler "pheet-fiber-backend/service/file/handler"
+	_file_usecase "pheet-fiber-backend/service/file/usecase"
 
 	"github.com/gofiber/fiber/v2"
 	_ "github.com/lib/pq"
@@ -51,12 +54,14 @@ func main() {
 	midUs := _middle_usecase.NewMiddlewareUsecase(midRepo)
 	userUs := _users_usecase.NewUsersUsecase(cfg, userRepo)
 	infoUs := _appinfo_usecase.NewAppInfoUsecase(cfg, infoRepo)
+	fileUs := _file_usecase.NewFileUsecase(cfg)
 
 	/* Init Handler */
 	middleware := _middle_handler.NewMiddlewareHandler(cfg, midUs)
 	monHandler := _monitor_handler.NewMonitorHandler(cfg)
 	userHandler := _users_handler.NewUsersHandler(cfg, userUs)
 	infoHandler := _appinfo_handler.NewAppInfoHandler(cfg, infoUs)
+	fileHandler := _file_handler.NewFileHandler(cfg, fileUs)
 
 	_ = infoHandler
 
@@ -85,6 +90,7 @@ func main() {
 	/* Init Routing */
 	r.RegisterUsers(userHandler, middleware)
 	r.RegisterAppInfo(infoHandler, middleware)
+	r.RegisterFile(fileHandler, middleware)
 
 	// Graceful Shutdown
 	var c = make(chan os.Signal, 1)

@@ -17,7 +17,7 @@ type usersHandlers struct {
 }
 
 func NewUsersHandler(cfg config.Iconfig, usersUs users.IUsersUsecase) users.IUsersHandlers {
-	return usersHandlers{
+	return &usersHandlers{
 		cfg:     cfg,
 		usersUs: usersUs,
 	}

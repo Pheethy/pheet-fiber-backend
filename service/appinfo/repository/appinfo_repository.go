@@ -17,7 +17,7 @@ type appInfoRepository struct {
 }
 
 func NewAppInfoRepository(db *sqlx.DB) appinfo.AppInfoRepository {
-	return appInfoRepository{db: db}
+	return &appInfoRepository{db: db}
 }
 
 func (r appInfoRepository) whereCond(args *sync.Map) ([]string, []interface{}) {

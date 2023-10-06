@@ -14,7 +14,7 @@ type monitorHandler struct {
 }
 
 func NewMonitorHandler(cfg config.Iconfig) monitor.IMonitorHandler {
-	return monitorHandler{
+	return &monitorHandler{
 		cfg: cfg,
 	}
 }

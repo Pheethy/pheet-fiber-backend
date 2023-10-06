@@ -3,6 +3,7 @@ package route
 import (
 	"pheet-fiber-backend/middleware"
 	"pheet-fiber-backend/service/appinfo"
+	"pheet-fiber-backend/service/file"
 	"pheet-fiber-backend/service/users"
 
 	"github.com/gofiber/fiber/v2"
@@ -30,4 +31,8 @@ func (r Route) RegisterAppInfo(handler appinfo.AppInfoHandler, m middleware.Imid
 	r.e.Get("/info/category", m.ApiKeyAuth(), handler.FindCategory)
 	r.e.Post("/info/category", handler.AddCategory)
 	r.e.Delete("/info/category/:category_id", handler.RemoveCategory)
+}
+
+func (r Route) RegisterFile(handler file.IFileHandler, m middleware.ImiddlewareHandler) {
+	r.e.Post("/file/upload", handler.UploadFile)
 }

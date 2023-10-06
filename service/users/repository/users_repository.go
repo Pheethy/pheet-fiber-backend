@@ -16,7 +16,7 @@ type usersRepository struct {
 }
 
 func NewUsersRepository(psqlDB *sqlx.DB) users.IUsersRepository {
-	return usersRepository{
+	return &usersRepository{
 		psqlDB: psqlDB,
 	}
 }

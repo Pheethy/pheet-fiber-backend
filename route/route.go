@@ -29,4 +29,5 @@ func (r Route) RegisterAppInfo(handler appinfo.AppInfoHandler, m middleware.Imid
 	r.e.Get("/info/apikey", m.JwtAuth(), m.Authorize(1), handler.GenerateAPIKey)
 	r.e.Get("/info/category", m.ApiKeyAuth(), handler.FindCategory)
 	r.e.Post("/info/category", handler.AddCategory)
+	r.e.Delete("/info/category/:category_id", handler.RemoveCategory)
 }

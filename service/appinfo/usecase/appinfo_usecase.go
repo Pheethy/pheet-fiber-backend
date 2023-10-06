@@ -28,3 +28,7 @@ func (u appInfoUsecase) FindCategory(ctx context.Context, args *sync.Map) ([]*mo
 func (u appInfoUsecase) InsertCategories(ctx context.Context, cats []*models.Catagory) error {
 	return u.infoRepo.InsertCategories(ctx, cats)
 }
+
+func (u appInfoUsecase) DeleteCategory(ctx context.Context, id int) error {
+	return u.infoRepo.DeleteCategory(ctx, id)
+}

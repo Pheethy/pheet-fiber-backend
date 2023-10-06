@@ -90,3 +90,31 @@ func (r appInfoRepository) InsertCategories(ctx context.Context, cats []*models.
 
 	return tx.Commit()
 }
+
+func (r appInfoRepository) DeleteCategory(ctx context.Context, id int) error {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	sql := `
+		DELETE
+		FROM
+			"categories"
+		WHERE
+			"id" = $1
+	`
+
+	stmt, err := tx.PreparexContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, id); err != nil {
+		tx.Rollback()
+		return fmt.Errorf("delete categories failed: %v", err)
+	}
+
+	return tx.Commit()
+}

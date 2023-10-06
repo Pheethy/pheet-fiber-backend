@@ -7,6 +7,7 @@ import (
 	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/appinfo"
+	"strconv"
 	"sync"
 
 	"github.com/gofiber/fiber/v2"
@@ -77,5 +78,24 @@ func (h appInfoHandler) AddCategory(c *fiber.Ctx) error {
 	resp := map[string]interface{}{
 		"message": "created.",
 	}
+	return c.Status(http.StatusOK).JSON(resp)
+}
+
+func (h appInfoHandler) RemoveCategory(c *fiber.Ctx) error {
+	var ctx = c.Context()
+	var id = c.Params("category_id")
+	intId, err := strconv.Atoi(id)
+	if err != nil {
+		return fiber.NewError(http.StatusUnprocessableEntity, "can't convert string to int")
+	}
+
+	if err := h.infoUs.DeleteCategory(ctx, intId); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	resp := map[string]interface{}{
+		"message": "deleted.",
+	}
+
 	return c.Status(http.StatusOK).JSON(resp)
 }

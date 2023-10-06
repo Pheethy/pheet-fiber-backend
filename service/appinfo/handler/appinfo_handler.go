@@ -5,6 +5,7 @@ import (
 	"pheet-fiber-backend/auth/service"
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/constants"
+	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/appinfo"
 	"sync"
 
@@ -59,5 +60,22 @@ func (h appInfoHandler) FindCategory(c *fiber.Ctx) error {
 		"category": cats,
 	}
 
+	return c.Status(http.StatusOK).JSON(resp)
+}
+
+func (h appInfoHandler) AddCategory(c *fiber.Ctx) error {
+	var ctx = c.Context()
+	var cats = make([]*models.Catagory, 0)
+	if err := c.BodyParser(&cats); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	if err := h.infoUs.InsertCategories(ctx, cats); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	resp := map[string]interface{}{
+		"message": "created.",
+	}
 	return c.Status(http.StatusOK).JSON(resp)
 }

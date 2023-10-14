@@ -3,12 +3,14 @@ package usecase
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/file"
+	"strings"
 	"time"
 
 	"cloud.google.com/go/storage"
@@ -110,9 +112,9 @@ func (f fileUsecase) streamFileUpload(ctx context.Context, client *storage.Clien
 		newFile := &models.FilePub{
 			File: &models.FileResp{
 				FileName: job.FileName,
-				Url: fmt.Sprintf("https://storage.googleapis.com/%s/%s", f.cfg.App().GCPBucket(), job.Destination),
+				Url:      fmt.Sprintf("https://storage.googleapis.com/%s/%s", f.cfg.App().GCPBucket(), job.Destination),
 			},
-			Bucket: f.cfg.App().GCPBucket(),
+			Bucket:      f.cfg.App().GCPBucket(),
 			Destination: job.Destination,
 		}
 
@@ -127,3 +129,70 @@ func (f fileUsecase) streamFileUpload(ctx context.Context, client *storage.Clien
 	}
 }
 
+func (f fileUsecase) DeleteOnGCP(req []*models.DeleteFileReq) error {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
+	defer cancel()
+
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		return fmt.Errorf("Err new GCP client: %v", err)
+	}
+	defer client.Close()
+
+	/* ทำ Pool worker */
+	/* สร้าง Jobs channel */
+	var jobsCh = make(chan *models.DeleteFileReq, len(req))
+	/* สร้าง Errors Channel*/
+	var errCh = make(chan error, len(req))
+
+	/* ทำการนำ File delete request ใส่ใน jobs channel */
+	for _, r := range req {
+		jobsCh <- r
+	}
+	close(jobsCh)
+
+	/* ประกาศจำนวน worker */
+	var workers int = 5
+	/* สร้าง loop สำหรับการทำงานตามจำนวน worker */
+	for w := 0; w < workers; w++ {
+		/* working space */
+		go f.deleteFile(ctx, client, jobsCh, errCh)
+	}
+
+	/* สร้าง loop สำหรับการ รับค่า err จาก errs channel */
+	for i := 0; i < len(req); i++ {
+		//handler err โดยการรับค่า err จาก Channel errCh
+		if err := <-errCh; err != nil {
+			return fmt.Errorf("Response err: %v", err)
+		}
+	}
+
+	return nil
+}
+
+// deleteFile removes specified object.
+func (f fileUsecase) deleteFile(ctx context.Context, client *storage.Client, jobs <-chan *models.DeleteFileReq, errs chan<- error) {
+	for job := range jobs {
+		o := client.Bucket(f.cfg.App().GCPBucket()).Object(job.Destination)
+
+		attrs, err := o.Attrs(ctx)
+		if err != nil {
+			if ok := strings.Contains(err.Error(), "object doesn't exist"); ok {
+				errs <- fmt.Errorf("object.Attrs: %w", errors.New("can't found image"))
+				return
+			}
+			errs <- fmt.Errorf("object.Attrs: %w", err)
+			return
+		}
+		o = o.If(storage.Conditions{GenerationMatch: attrs.Generation})
+
+		if err := o.Delete(ctx); err != nil {
+			errs <- fmt.Errorf("Object(%q).Delete: %w", job.Destination, err)
+			return
+		}
+		fmt.Printf("Blob %v deleted.\n", job.Destination)
+
+		/* กรณีไม่มี error ก็ต้องทำการ return ค่า nil ออกไป errCh เพราะเราประกาศรับค่าไว้ */
+		errs <- nil
+	}
+}

@@ -34,5 +34,6 @@ func (r Route) RegisterAppInfo(handler appinfo.AppInfoHandler, m middleware.Imid
 }
 
 func (r Route) RegisterFile(handler file.IFileHandler, m middleware.ImiddlewareHandler) {
-	r.e.Post("/file/upload", handler.UploadFile)
+	r.e.Post("/file/upload",m.JwtAuth(), m.Authorize(1), handler.UploadFile)
+	r.e.Patch("/file/delete",m.JwtAuth(), m.Authorize(1), handler.DeleteFile)
 }

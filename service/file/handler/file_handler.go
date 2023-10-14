@@ -72,11 +72,28 @@ func (f *fileHandler) UploadFile(c *fiber.Ctx) error {
 	return c.Status(http.StatusOK).JSON(resp)
 }
 
+func (f *fileHandler) DeleteFile(c *fiber.Ctx) error {
+	var req = make([]*models.DeleteFileReq, 0)
+	if err := c.BodyParser(&req); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	if err := f.fileUs.DeleteOnGCP(req); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	resp := map[string]interface{}{
+		"message": "successful.",
+	}
+
+	return c.Status(http.StatusOK).JSON(resp)
+}
+
 func (f *fileHandler) validateFileType(ext string) bool {
 	if ext == "" {
 		return false
 	}
-	log.Println("ext:", ext)
+	
 	expMap := []string{"png","jpg","jpeg"}
 	for index := range expMap {
 		if expMap[index] == ext {

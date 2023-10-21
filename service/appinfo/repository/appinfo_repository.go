@@ -33,7 +33,7 @@ func (r appInfoRepository) whereCond(args *sync.Map) ([]string, []interface{}) {
 	return cond, vals
 }
 
-func (r appInfoRepository) FindCategory(ctx context.Context, args *sync.Map) ([]*models.Catagory, error) {
+func (r appInfoRepository) FindCategory(ctx context.Context, args *sync.Map) ([]*models.Categories, error) {
 	conds, vals := r.whereCond(args)
 	var where string
 	if len(conds) > 0 {
@@ -51,7 +51,7 @@ func (r appInfoRepository) FindCategory(ctx context.Context, args *sync.Map) ([]
 		where,
 	)
 
-	var cats = make([]*models.Catagory, 0)
+	var cats = make([]*models.Categories, 0)
 	if err := r.db.SelectContext(ctx, &cats, sql, vals...); err != nil {
 		return nil, fmt.Errorf("Insert catagories failed: %v", err)
 	}
@@ -59,7 +59,7 @@ func (r appInfoRepository) FindCategory(ctx context.Context, args *sync.Map) ([]
 	return cats, nil
 }
 
-func (r appInfoRepository) InsertCategories(ctx context.Context, cats []*models.Catagory) error {
+func (r appInfoRepository) InsertCategories(ctx context.Context, cats []*models.Categories) error {
 	tx, err := r.db.Beginx()
 	if err != nil {
 		return err

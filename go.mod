@@ -5,16 +5,24 @@ go 1.19
 require (
 	4d63.com/tz v1.2.0
 	cloud.google.com/go/storage v1.33.0
+	git.innovasive.co.th/backend/models v1.1.0
+	git.innovasive.co.th/backend/psql v1.4.5
 	github.com/BlackMocca/sqlx v1.0.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
+	github.com/fatih/structs v1.1.0
 	github.com/gofiber/fiber/v2 v2.41.0
 	github.com/gofrs/uuid v4.4.0+incompatible
 	github.com/golang-jwt/jwt/v4 v4.5.0
 	github.com/google/uuid v1.3.0
+	github.com/guregu/null v4.0.0+incompatible
 	github.com/jackc/pgx/v5 v5.4.2
 	github.com/joho/godotenv v1.4.0
 	github.com/lib/pq v1.10.7
+	github.com/spf13/cast v1.5.1
+	github.com/stretchr/testify v1.8.4
 	golang.org/x/crypto v0.11.0
+	golang.org/x/sync v0.3.0
+	gopkg.in/DATA-DOG/go-sqlmock.v2 v2.0.0-20180914054222-c19298f520d0
 )
 
 require (
@@ -22,8 +30,9 @@ require (
 	cloud.google.com/go/compute v1.20.1 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.0 // indirect
-	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.1 // indirect
+	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/emirpasic/gods v1.18.1 // indirect
+	github.com/globalsign/mgo v0.0.0-20180718154654-64f7b0527e1a // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/google/go-cmp v0.5.9 // indirect
@@ -32,7 +41,10 @@ require (
 	github.com/googleapis/gax-go/v2 v2.12.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
-	github.com/leodido/go-urn v1.2.1 // indirect
+	github.com/opentracing/opentracing-go v1.2.0 // indirect
+	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/qustavo/sqlhooks/v2 v2.1.0 // indirect
+	github.com/rogpeppe/go-internal v1.11.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
@@ -45,13 +57,12 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
 	google.golang.org/grpc v1.56.2 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
-	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 require (
 	4d63.com/embedfiles v0.0.0-20190311033909-995e0740726f // indirect
 	github.com/andybalholm/brotli v1.0.4 // indirect
-	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-sql-driver/mysql v1.7.0 // indirect
 	github.com/klauspost/compress v1.15.9 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

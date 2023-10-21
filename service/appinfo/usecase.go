@@ -7,7 +7,7 @@ import (
 )
 
 type AppInfoUsecase interface {
-	FindCategory(ctx context.Context, args *sync.Map) ([]*models.Catagory, error)
-	InsertCategories(ctx context.Context, cats []*models.Catagory) error
+	FindCategory(ctx context.Context, args *sync.Map) ([]*models.Categories, error)
+	InsertCategories(ctx context.Context, cats []*models.Categories) error
 	DeleteCategory(ctx context.Context, id int) error
 }

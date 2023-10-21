@@ -21,11 +21,11 @@ func NewAppInfoUsecase(cfg config.Iconfig, infoRepo appinfo.AppInfoRepository) a
 }
 
 
-func (u appInfoUsecase) FindCategory(ctx context.Context, args *sync.Map) ([]*models.Catagory, error) {
+func (u appInfoUsecase) FindCategory(ctx context.Context, args *sync.Map) ([]*models.Categories, error) {
 	return u.infoRepo.FindCategory(ctx, args)
 }
 
-func (u appInfoUsecase) InsertCategories(ctx context.Context, cats []*models.Catagory) error {
+func (u appInfoUsecase) InsertCategories(ctx context.Context, cats []*models.Categories) error {
 	return u.infoRepo.InsertCategories(ctx, cats)
 }
 

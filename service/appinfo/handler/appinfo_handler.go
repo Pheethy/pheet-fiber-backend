@@ -66,7 +66,7 @@ func (h appInfoHandler) FindCategory(c *fiber.Ctx) error {
 
 func (h appInfoHandler) AddCategory(c *fiber.Ctx) error {
 	var ctx = c.Context()
-	var cats = make([]*models.Catagory, 0)
+	var cats = make([]*models.Categories, 0)
 	if err := c.BodyParser(&cats); err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}

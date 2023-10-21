@@ -4,6 +4,7 @@ import (
 	"pheet-fiber-backend/middleware"
 	"pheet-fiber-backend/service/appinfo"
 	"pheet-fiber-backend/service/file"
+	"pheet-fiber-backend/service/product"
 	"pheet-fiber-backend/service/users"
 
 	"github.com/gofiber/fiber/v2"
@@ -36,4 +37,8 @@ func (r Route) RegisterAppInfo(handler appinfo.AppInfoHandler, m middleware.Imid
 func (r Route) RegisterFile(handler file.IFileHandler, m middleware.ImiddlewareHandler) {
 	r.e.Post("/file/upload",m.JwtAuth(), m.Authorize(1), handler.UploadFile)
 	r.e.Patch("/file/delete",m.JwtAuth(), m.Authorize(1), handler.DeleteFile)
+}
+
+func (r Route) RegisterProduct(handler product.IProductHandler, m middleware.ImiddlewareHandler) {
+	r.e.Get("/product/:product_id", handler.FetchOneProduct)
 }

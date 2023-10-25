@@ -60,7 +60,7 @@ func main() {
 	userUs := _users_usecase.NewUsersUsecase(cfg, userRepo)
 	infoUs := _appinfo_usecase.NewAppInfoUsecase(cfg, infoRepo)
 	fileUs := _file_usecase.NewFileUsecase(cfg)
-	proUs := _product_usecase.NewProductUsecase(proRepo, fileUs)
+	proUs := _product_usecase.NewProductUsecase(proRepo, fileUs, cfg)
 
 	/* Init Handler */
 	middleware := _middle_handler.NewMiddlewareHandler(cfg, midUs)

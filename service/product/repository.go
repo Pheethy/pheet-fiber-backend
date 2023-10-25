@@ -10,4 +10,5 @@ import (
 type IProductRepository interface {
 	FetchOneProduct(ctx context.Context, id string) (*models.Products, error)
 	FetchAllProduct(ctx context.Context, args *sync.Map, paginate *helper.Paginator) ([]*models.Products, error)
+	CraeteProduct(ctx context.Context, req *models.Products) error
 }

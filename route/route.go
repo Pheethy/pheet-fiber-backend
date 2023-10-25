@@ -35,11 +35,12 @@ func (r Route) RegisterAppInfo(handler appinfo.AppInfoHandler, m middleware.Imid
 }
 
 func (r Route) RegisterFile(handler file.IFileHandler, m middleware.ImiddlewareHandler) {
-	r.e.Post("/file/upload",m.JwtAuth(), m.Authorize(2), handler.UploadFile)
-	r.e.Patch("/file/delete",m.JwtAuth(), m.Authorize(2), handler.DeleteFile)
+	r.e.Post("/file/upload",m.JwtAuth(), m.Authorize(1), m.ApiKeyAuth(), handler.UploadFile)
+	r.e.Patch("/file/delete",m.JwtAuth(), m.Authorize(1), m.ApiKeyAuth(), handler.DeleteFile)
 }
 
 func (r Route) RegisterProduct(handler product.IProductHandler, m middleware.ImiddlewareHandler) {
 	r.e.Get("/product/:product_id", m.ApiKeyAuth(), handler.FetchOneProduct)
 	r.e.Get("/product", m.ApiKeyAuth(), handler.FetchAllProduct)
+	r.e.Post("/product", handler.CreateProduct)
 }

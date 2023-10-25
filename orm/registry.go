@@ -5,8 +5,6 @@ import (
 	"reflect"
 	"time"
 
-	"git.innovasive.co.th/backend/models"
-	helperModel "git.innovasive.co.th/backend/models"
 	"github.com/fatih/structs"
 	"github.com/gofrs/uuid"
 	"github.com/guregu/null/zero"
@@ -28,8 +26,8 @@ var GlobalRegistry = map[string]Registry{
 	(integer64(0)).TypeName():                       (integer64(0)),
 	(floater32(float32(0))).TypeName():              (floater32(0)),
 	(floater64(float64(0))).TypeName():              (floater64(0)),
-	(timestamp(helperModel.Timestamp{})).TypeName(): timestamp(helperModel.Timestamp{}),
-	(date(helperModel.Date{})).TypeName():           date(helperModel.Date{}),
+	(timestamp(helper.Timestamp{})).TypeName(): timestamp(helper.Timestamp{}),
+	(date(helper.Date{})).TypeName():           date(helper.Date{}),
 	(zeroString(zeroString{})).TypeName():           zeroString(zero.String{}),
 	(zeroInt(zero.Int{})).TypeName():                zeroInt(zero.Int{}),
 	(zeroFloat(zero.Float{})).TypeName():            zeroFloat(zero.Float{}),
@@ -83,7 +81,7 @@ func (elem uid) Equal(x interface{}, y interface{}) bool {
 |
 ----------------------------------------
 */
-type zerouid models.ZeroUUID
+type zerouid helper.ZeroUUID
 
 func (elem zerouid) TypeName() string {
 	return "zerouuid"
@@ -93,12 +91,12 @@ func (elem zerouid) RegisterPkId(val interface{}) string {
 	if val == nil || reflect.ValueOf(val).IsNil() || reflect.ValueOf(val).IsZero() {
 		return ""
 	}
-	return val.(models.ZeroUUID).String()
+	return val.(helper.ZeroUUID).String()
 }
 
 func (elem zerouid) Bind(field *structs.Field, val interface{}) error {
 	if val != nil {
-		parseVal, err := models.NewZeroUUIDFromstring(cast.ToString(val))
+		parseVal, err := helper.NewZeroUUIDFromstring(cast.ToString(val))
 		if err == nil {
 			return field.Set(parseVal)
 		}
@@ -111,21 +109,21 @@ func (elem zerouid) Equal(x interface{}, y interface{}) bool {
 		return false
 	}
 
-	if reflect.TypeOf(x).String() == "models.ZeroUUID" && reflect.TypeOf(y).String() == "models.ZeroUUID" {
-		if x.(models.ZeroUUID) == (models.ZeroUUID{}) || y.(models.ZeroUUID) == (models.ZeroUUID{}) {
+	if reflect.TypeOf(x).String() == "helper.ZeroUUID" && reflect.TypeOf(y).String() == "helper.ZeroUUID" {
+		if x.(helper.ZeroUUID) == (helper.ZeroUUID{}) || y.(helper.ZeroUUID) == (helper.ZeroUUID{}) {
 			return false
 		}
-		return x.(models.ZeroUUID).String() == y.(models.ZeroUUID).String()
-	} else if reflect.TypeOf(x).String() == "models.ZeroUUID" && reflect.TypeOf(y).String() == "*uuid.UUID" {
-		if x.(models.ZeroUUID) == (models.ZeroUUID{}) || y == nil {
+		return x.(helper.ZeroUUID).String() == y.(helper.ZeroUUID).String()
+	} else if reflect.TypeOf(x).String() == "helper.ZeroUUID" && reflect.TypeOf(y).String() == "*uuid.UUID" {
+		if x.(helper.ZeroUUID) == (helper.ZeroUUID{}) || y == nil {
 			return false
 		}
-		return x.(models.ZeroUUID).String() == y.(*uuid.UUID).String()
-	} else if reflect.TypeOf(x).String() == "*uuid.UUID" && reflect.TypeOf(y).String() == "models.ZeroUUID" {
-		if x == nil || y.(models.ZeroUUID) == (models.ZeroUUID{}) {
+		return x.(helper.ZeroUUID).String() == y.(*uuid.UUID).String()
+	} else if reflect.TypeOf(x).String() == "*uuid.UUID" && reflect.TypeOf(y).String() == "helper.ZeroUUID" {
+		if x == nil || y.(helper.ZeroUUID) == (helper.ZeroUUID{}) {
 			return false
 		}
-		return y.(models.ZeroUUID).String() == x.(*uuid.UUID).String()
+		return y.(helper.ZeroUUID).String() == x.(*uuid.UUID).String()
 	}
 	return false
 }
@@ -327,12 +325,12 @@ func (elem timestamp) Bind(field *structs.Field, val interface{}) error {
 }
 
 func (elem timestamp) Equal(x interface{}, y interface{}) bool {
-	p1, p1OK := x.(*helperModel.Timestamp)
-	p2, p2OK := y.(*helperModel.Timestamp)
+	p1, p1OK := x.(*helper.Timestamp)
+	p2, p2OK := y.(*helper.Timestamp)
 	if p1OK && p2OK {
 		return p1.ToUnix() == p2.ToUnix()
 	}
-	return x.(helperModel.Timestamp).ToUnix() == y.(helperModel.Timestamp).ToUnix()
+	return x.(helper.Timestamp).ToUnix() == y.(helper.Timestamp).ToUnix()
 }
 
 /*
@@ -342,7 +340,7 @@ func (elem timestamp) Equal(x interface{}, y interface{}) bool {
 |
 ----------------------------------------
 */
-type date helperModel.Date
+type date helper.Date
 
 func (elem date) TypeName() string {
 	return "date"
@@ -352,10 +350,10 @@ func (elem date) RegisterPkId(val interface{}) string {
 	if val == nil || reflect.ValueOf(val).IsNil() || reflect.ValueOf(val).IsZero() {
 		return ""
 	}
-	if v, ok := val.(*helperModel.Date); ok {
+	if v, ok := val.(*helper.Date); ok {
 		return v.String()
 	}
-	if v, ok := val.(helperModel.Date); ok {
+	if v, ok := val.(helper.Date); ok {
 		return v.String()
 	}
 	return cast.ToString(val)
@@ -365,10 +363,10 @@ func (elem date) Bind(field *structs.Field, val interface{}) error {
 	if val != nil {
 		switch reflect.TypeOf(val).String() {
 		case "time.Time":
-			dt := helperModel.Date(val.(time.Time))
+			dt := helper.Date(val.(time.Time))
 			field.Set(&dt)
 		case "string":
-			dt := models.NewDateFromString(cast.ToString(val))
+			dt := helper.NewDateFromString(cast.ToString(val))
 			field.Set(&dt)
 		}
 	}
@@ -376,12 +374,12 @@ func (elem date) Bind(field *structs.Field, val interface{}) error {
 }
 
 func (elem date) Equal(x interface{}, y interface{}) bool {
-	p1, p1OK := x.(*helperModel.Date)
-	p2, p2OK := y.(*helperModel.Date)
+	p1, p1OK := x.(*helper.Date)
+	p2, p2OK := y.(*helper.Date)
 	if p1OK && p2OK {
 		return p1.String() == p2.String()
 	}
-	return x.(helperModel.Date).String() == y.(helperModel.Date).String()
+	return x.(helper.Date).String() == y.(helper.Date).String()
 }
 
 /*

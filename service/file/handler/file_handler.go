@@ -2,7 +2,6 @@ package handler
 
 import (
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"path/filepath"
@@ -16,13 +15,13 @@ import (
 )
 
 type fileHandler struct {
-	cfg config.Iconfig
+	cfg    config.Iconfig
 	fileUs file.IFileUsecase
 }
 
 func NewFileHandler(cfg config.Iconfig, fileUs file.IFileUsecase) file.IFileHandler {
 	return &fileHandler{
-		cfg: cfg,
+		cfg:    cfg,
 		fileUs: fileUs,
 	}
 }
@@ -38,7 +37,6 @@ func (f *fileHandler) UploadFile(c *fiber.Ctx) error {
 	files := form.File["files"]
 	dest := c.FormValue("destination")
 
-
 	for _, file := range files {
 		ext := strings.TrimPrefix(filepath.Ext(file.Filename), ".")
 		if ok := f.validateFileType(ext); !ok {
@@ -51,22 +49,21 @@ func (f *fileHandler) UploadFile(c *fiber.Ctx) error {
 
 		filename := utils.RandFileName(ext)
 		req = append(req, &models.FileReq{
-			File: file,
+			File:        file,
 			Destination: dest + "/" + filename,
-			Extension: ext,
-			FileName: file.Filename,
+			Extension:   ext,
+			FileName:    file.Filename,
 		})
 	}
-	
+
 	newFileInfo, err := f.fileUs.UploadToGCP(req)
 	if err != nil {
-		log.Println("incase")
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 
 	resp := map[string]interface{}{
 		"message": "uploaded.",
-		"resp": newFileInfo,
+		"resp":    newFileInfo,
 	}
 
 	return c.Status(http.StatusOK).JSON(resp)
@@ -93,8 +90,8 @@ func (f *fileHandler) validateFileType(ext string) bool {
 	if ext == "" {
 		return false
 	}
-	
-	expMap := []string{"png","jpg","jpeg"}
+
+	expMap := []string{"png", "jpg", "jpeg"}
 	for index := range expMap {
 		if expMap[index] == ext {
 			return true

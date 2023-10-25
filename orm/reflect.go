@@ -19,6 +19,7 @@ var TAG_TYPE = "type"
 var PAGINATE_COLUMN_NAME = "total_row"
 var fieldSeperate = ","
 var fieldFKSeperate = "+"
+var fieldJoinKeyMap = "+"
 
 func isNil(val interface{}) bool {
 	if val == nil || (reflect.ValueOf(val).Kind() == reflect.Ptr && reflect.ValueOf(val).IsNil()) {

@@ -15,6 +15,7 @@ import (
 	"sync"
 
 	"github.com/BlackMocca/sqlx"
+	"github.com/gofrs/uuid"
 )
 
 type productRepository struct {
@@ -198,7 +199,7 @@ func (r productRepository) CraeteProduct(ctx context.Context, req *models.Produc
 		return fmt.Errorf("create products_categories failed: %v", err)
 	}
 
-	if err := r.createImages(ctx, tx, req.Images); err != nil {
+	if err := r.upsertImages(ctx, tx, req.Images); err != nil {
 		return fmt.Errorf("create images failed: %v", err)
 	}
 
@@ -268,7 +269,7 @@ func (r productRepository) createProductsCategories(ctx context.Context, tx *sql
 	return nil
 }
 
-func (r productRepository) createImages(ctx context.Context, tx *sqlx.Tx, images []*models.Image) error {
+func (r productRepository) upsertImages(ctx context.Context, tx *sqlx.Tx, images []*models.Image) error {
 	sql := `
 		INSERT INTO images (
 			id,
@@ -285,6 +286,12 @@ func (r productRepository) createImages(ctx context.Context, tx *sqlx.Tx, images
 			$5::timestamp,
 			$6::timestamp
 		)
+		NO CONFLICT(id)
+		DO UPDATE SET
+			filename=$1::text,
+			url=$2::text,
+			product_id=$3::text,
+			updated_at=$4::timestamp
 	`
 	stmt, err := tx.PreparexContext(ctx, sql)
 	if err != nil {
@@ -293,11 +300,17 @@ func (r productRepository) createImages(ctx context.Context, tx *sqlx.Tx, images
 
 	for index := range images {
 		if _, err := stmt.ExecContext(ctx,
+			//create
 			images[index].ID,
 			images[index].FilenName,
 			images[index].Url,
 			images[index].ProductId,
 			images[index].CreatedAt,
+			images[index].UpdatedAt,
+			//update
+			images[index].FilenName,
+			images[index].Url,
+			images[index].ProductId,
 			images[index].UpdatedAt,
 		); err != nil {
 			tx.Rollback()
@@ -306,6 +319,148 @@ func (r productRepository) createImages(ctx context.Context, tx *sqlx.Tx, images
 	}
 
 	return nil
+}
+
+func (r productRepository) UpdateProduct(ctx context.Context, product *models.Products) error {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+
+	if err := r.updateProducts(ctx, tx, product); err != nil {
+		return fmt.Errorf("update product failed: %v", err)
+	}
+
+	if err := r.updateImage(ctx, tx, product.Images); err != nil {
+		return fmt.Errorf("update image failed: %v", err)
+	}
+
+	if err := r.updateProductsCategories(ctx, tx, product); err != nil {
+		return fmt.Errorf("update products_categories failed: %v", err)
+	}
+
+	return tx.Commit()
+}
+
+func (r productRepository) updateProducts(ctx context.Context, tx *sqlx.Tx, product *models.Products) error {
+	sql := `
+		UPDATE
+			products
+		SET
+			title=$1::text,
+			description=$2::text,
+			price=$3::float,
+			updated_at=$4::timestamp
+		WHERE
+			id=$5::string
+	`
+	stmt, err := tx.PreparexContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx,
+		product.Title,
+		product.Description,
+		product.UpdatedAt,
+		product.ID,
+	); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func (r productRepository) updateImage(ctx context.Context, tx *sqlx.Tx, images []*models.Image) error {
+	sql := `
+		UPDATE
+			images
+		SET
+			filename=$1::text,
+			url=$2::text,
+			updated_at=$3::timestamp
+		WHERE
+			id=$4::uuid
+	`
+	stmt, err := tx.PreparexContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if len(images) > 0 {
+		for index := range images {
+			if _, err := stmt.ExecContext(ctx,
+				images[index].FilenName,
+				images[index].Url,
+				images[index].UpdatedAt,
+				images[index].ID,
+			); err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (r productRepository) updateProductsCategories(ctx context.Context, tx *sqlx.Tx, product *models.Products) error {
+	sql := `
+		UPDATE
+			products_categories
+		SET
+			category_id=$1::int
+		WHERE
+			product_id=$2::text
+	`
+
+	stmt, err := tx.PreparexContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx,
+		product.CategoriesId,
+		product.ID,
+	); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func (r productRepository) DeleteImages(ctx context.Context, ids []*uuid.UUID) error {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+	sql := `
+		DELETE FROM images
+		WHERE id=$1::uuid;
+	`
+	stmt, err := tx.PreparexContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if len(ids) > 0 {
+		for _, id := range ids {
+			if _, err := stmt.ExecContext(ctx,
+				id,
+			); err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
 }
 
 func (r productRepository) orm(ctx context.Context, rows *sqlx.Rows) (*models.Products, error) {

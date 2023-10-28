@@ -108,3 +108,33 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 
 	return c.Status(http.StatusOK).JSON(resp)
 }
+
+func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
+	var ctx = c.Context()
+	var newProduct = new(models.Products)
+	if err := c.BodyParser(&newProduct); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+	var productId = c.Params("product_id")
+
+	existProduct, err := h.proUs.FetchOneProduct(ctx, productId)
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+	if existProduct == nil {
+		return fiber.NewError(http.StatusNoContent, "there is no product with this id.")
+	}
+
+	newProduct.MergeProduct(existProduct)
+	var delImages = newProduct.FindDeleteImage(existProduct)
+	_ = delImages
+	if err := h.proUs.UpdateProduct(ctx, newProduct); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	resp := map[string]interface{}{
+		"message": "successful.",
+	}
+
+	return c.Status(http.StatusOK).JSON(resp)
+}

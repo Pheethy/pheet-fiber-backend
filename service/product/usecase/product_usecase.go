@@ -86,6 +86,10 @@ func (u productUsecase) CraeteProduct(ctx context.Context, req *models.Products,
 	return u.proRepo.CraeteProduct(ctx, req)
 }
 
+func (u productUsecase) UpdateProduct(ctx context.Context, product *models.Products) error {
+	return u.proRepo.UpdateProduct(ctx, product)
+}
+
 func (u productUsecase) validateFileType(ext string) bool {
 	if ext == "" {
 		return false

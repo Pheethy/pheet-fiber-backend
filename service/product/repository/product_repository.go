@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/helper"
@@ -70,9 +69,17 @@ func (r productRepository) FetchAllProduct(ctx context.Context, args *sync.Map, 
 	sql := fmt.Sprintf(`
 		SELECT
 			%s,
-			%s
+			%s,
+			products.total_row
 		FROM
-			products
+		(
+			SELECT
+				*,
+				COUNT(*) OVER() as "total_row"
+			FROM
+				products
+			%s
+		) as products
 		JOIN
 		 	images
 		ON
@@ -80,12 +87,11 @@ func (r productRepository) FetchAllProduct(ctx context.Context, args *sync.Map, 
 		%s
 		ORDER BY
 			products.created_at ASC
-		%s
 	`,
 		orm.GetSelector(models.Products{}),
 		orm.GetSelector(models.Image{}),
-		where,
 		paginateSQL,
+		where,
 	)
 
 	sql = sqlx.Rebind(sqlx.DOLLAR, sql)
@@ -94,7 +100,7 @@ func (r productRepository) FetchAllProduct(ctx context.Context, args *sync.Map, 
 		return nil, err
 	}
 	defer stmt.Close()
-	log.Println("sql:", sql)
+
 	rows, err := stmt.QueryxContext(ctx, vals...)
 	if err != nil {
 		return nil, err
@@ -286,12 +292,12 @@ func (r productRepository) upsertImages(ctx context.Context, tx *sqlx.Tx, images
 			$5::timestamp,
 			$6::timestamp
 		)
-		NO CONFLICT(id)
+		ON CONFLICT (id)
 		DO UPDATE SET
-			filename=$1::text,
-			url=$2::text,
-			product_id=$3::text,
-			updated_at=$4::timestamp
+			filename=$7::text,
+			url=$8::text,
+			product_id=$9::text,
+			updated_at=$10::timestamp
 	`
 	stmt, err := tx.PreparexContext(ctx, sql)
 	if err != nil {
@@ -331,7 +337,7 @@ func (r productRepository) UpdateProduct(ctx context.Context, product *models.Pr
 		return fmt.Errorf("update product failed: %v", err)
 	}
 
-	if err := r.updateImage(ctx, tx, product.Images); err != nil {
+	if err := r.upsertImages(ctx, tx, product.Images); err != nil {
 		return fmt.Errorf("update image failed: %v", err)
 	}
 
@@ -493,17 +499,17 @@ func (r productRepository) orms(ctx context.Context, rows *sqlx.Rows, paginator 
 	if err != nil {
 		panic(err)
 	}
-	// log.Println("page Total", mapper.GetPaginateTotal())
+
 	products := mapper.GetData().([]*models.Products)
 	if paginator != nil {
 		paginator.SetPaginatorByAllRows(mapper.GetPaginateTotal())
 	}
 
-	/* worker pools */
+	/* ทำ worker pool */
 	var jobsCh = make(chan *models.Products, len(products))
 	var errCh = make(chan error, len(products))
 
-	/* ทำการนำ products ใส่ไปใน jobs channel */
+	/* นำ products ใส่ไปใน jobs channel */
 	for _, r := range products {
 		jobsCh <- r
 	}

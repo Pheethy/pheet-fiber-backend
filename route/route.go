@@ -41,6 +41,7 @@ func (r Route) RegisterFile(handler file.IFileHandler, m middleware.ImiddlewareH
 
 func (r Route) RegisterProduct(handler product.IProductHandler, m middleware.ImiddlewareHandler) {
 	r.e.Get("/product/:product_id", m.ApiKeyAuth(), handler.FetchOneProduct)
-	r.e.Get("/product", m.ApiKeyAuth(), handler.FetchAllProduct)
+	r.e.Get("/product", handler.FetchAllProduct)
 	r.e.Post("/product", handler.CreateProduct)
+	r.e.Put("/product/:product_id", handler.UpdateProduct)
 }

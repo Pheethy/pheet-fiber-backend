@@ -1,7 +1,9 @@
 package models
 
 import (
+	"log"
 	"pheet-fiber-backend/helper"
+	"strings"
 	"time"
 
 	"github.com/gofrs/uuid"
@@ -17,9 +19,9 @@ type Products struct {
 	CreatedAt    *helper.Timestamp `json:"created_at" db:"created_at" type:"timestamp"`
 	UpdatedAt    *helper.Timestamp `json:"updated_at" db:"updated_at" type:"timestamp"`
 	CategoriesId int64             `json:"categories_id" form:"categories_id" db:"-" type:"int64"` /* categories_id สำหรับการสร้าง products_categories */
-	
-	Categories   *Categories       `json:"categories" db:"-"`  /* สำหรับการ Fetch Category มา Fill เพื่อดูว่า Product อยู่ Categories ไหน */
-	Images []*Image `json:"images" db:"-" fk:"fk_field1:ID, fk_field2:ProductId"`
+
+	Categories *Categories `json:"categories" db:"-"` /* สำหรับการ Fetch Category มา Fill เพื่อดูว่า Product อยู่ Categories ไหน */
+	Images     []*Image    `json:"images" db:"-" fk:"fk_field1:ID, fk_field2:ProductId"`
 
 	DelImages []*uuid.UUID /* สำหรับ เก็บ id image ที่จะลบ */
 }
@@ -50,21 +52,27 @@ func (p *Products) MergeProduct(exist *Products) {
 	}
 }
 
-func (p *Products) FindDeleteImage(exist *Products) []*uuid.UUID {
+func (p *Products) FindDeleteImage(exist *Products) ([]*uuid.UUID, []string) {
 	var delIds = make([]*uuid.UUID, 0)
-    
-    // Create a map for faster lookup of existing image UUIDs
-    existImageMap := make(map[*uuid.UUID]struct{})
-    for _, u := range exist.Images {
-        existImageMap[u.ID] = struct{}{}
-    }
+	var delURL = make([]string, 0)
 
-    // Iterate through new images and check if they exist in the existing map
-    for _, u := range p.Images {
-        if _, exists := existImageMap[u.ID]; !exists {
-            delIds = append(delIds, u.ID) // Add the UUID to the delete list
-        }
-    }
+	// Create a map for faster lookup of existing image UUIDs
+	existImageMap := make(map[*uuid.UUID]struct{})
+	for _, u := range exist.Images {
+		existImageMap[u.ID] = struct{}{}
+	}
 
-    return delIds
+	// Iterate through new images and check if they exist in the existing map
+	for _, u := range p.Images {
+		if _, exists := existImageMap[u.ID]; !exists {
+			delIds = append(delIds, u.ID) // Add the UUID to the delete list// Prefix to remove
+			prefix := "https://storage.googleapis.com/pheethy-dev-bucket/"
+			// Use strings.TrimLeft to remove the prefix
+			result := strings.SplitAfter(u.Url, prefix)
+			log.Println("result", result[1])
+			delURL = append(delURL, result[1])
+		}
+	}
+
+	return delIds, delURL
 }

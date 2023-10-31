@@ -16,6 +16,8 @@ import (
 	"pheet-fiber-backend/service/utils"
 	"strings"
 	"sync"
+
+	"github.com/gofrs/uuid"
 )
 
 type productUsecase struct {
@@ -88,6 +90,10 @@ func (u productUsecase) CraeteProduct(ctx context.Context, req *models.Products,
 
 func (u productUsecase) UpdateProduct(ctx context.Context, product *models.Products) error {
 	return u.proRepo.UpdateProduct(ctx, product)
+}
+
+func (u productUsecase) DeleteImages(ctx context.Context, ids []*uuid.UUID) error {
+	return u.proRepo.DeleteImages(ctx, ids)
 }
 
 func (u productUsecase) validateFileType(ext string) bool {

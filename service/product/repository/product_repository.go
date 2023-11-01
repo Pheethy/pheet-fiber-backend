@@ -358,7 +358,7 @@ func (r productRepository) updateProducts(ctx context.Context, tx *sqlx.Tx, prod
 			price=$3::float,
 			updated_at=$4::timestamp
 		WHERE
-			id=$5::string
+			id=$5::text
 	`
 	stmt, err := tx.PreparexContext(ctx, sql)
 	if err != nil {
@@ -369,6 +369,7 @@ func (r productRepository) updateProducts(ctx context.Context, tx *sqlx.Tx, prod
 	if _, err := stmt.ExecContext(ctx,
 		product.Title,
 		product.Description,
+		product.Price,
 		product.UpdatedAt,
 		product.ID,
 	); err != nil {

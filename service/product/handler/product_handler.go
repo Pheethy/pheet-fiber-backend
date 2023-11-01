@@ -113,11 +113,17 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	var ctx = c.Context()
 	var newProduct = new(models.Products)
-	if err := c.BodyParser(&newProduct); err != nil {
+	if err := c.BodyParser(newProduct); err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 	var productId = c.Params("product_id")
-
+	/* ทำการรับ Files จาก Form */
+	form, err := c.MultipartForm()
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, "Cast Form Failed.")
+	}
+	files := form.File["files"]
+	
 	existProduct, err := h.proUs.FetchOneProduct(ctx, productId)
 	if err != nil {
 		return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("FetchOneFailed: %v", err))
@@ -125,12 +131,12 @@ func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	if existProduct == nil {
 		return fiber.NewError(http.StatusNoContent, "there is no product with this id.")
 	}
-
+	/* Merge Data && Images Managements */
 	newProduct.MergeProduct(existProduct)
 	delImages, delURL := newProduct.FindDeleteImage(existProduct)
-
 	var delReq = make([]*models.DeleteFileReq, 0)
 	if len(delURL) > 0 {
+
 		for index := range delURL {
 			req := &models.DeleteFileReq{
 				Destination: delURL[index],
@@ -139,13 +145,17 @@ func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 		}
 	}
 
-	if err := h.fileUs.DeleteOnGCP(delReq); err != nil {
-		return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("DeleteOnGCP failed: %v", err))
+	/* Delete Images Google Cloud Platform && Database */
+	if len(delReq) > 0 && len(delImages) > 0 {
+		if err := h.fileUs.DeleteOnGCP(delReq); err != nil {
+			return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("DeleteOnGCP failed: %v", err))
+		}
+		if err := h.proUs.DeleteImages(ctx, delImages); err != nil {
+			return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("DeleteImage failed: %v", err))
+		}
 	}
-	if err := h.proUs.DeleteImages(ctx, delImages); err != nil {
-		return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("DeleteImage failed: %v", err))
-	}
-	if err := h.proUs.UpdateProduct(ctx, newProduct); err != nil {
+
+	if err := h.proUs.UpdateProduct(ctx, newProduct, files); err != nil {
 		return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("UpdateProduct failed: %v", err))
 	}
 

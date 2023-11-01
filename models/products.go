@@ -1,7 +1,6 @@
 package models
 
 import (
-	"log"
 	"pheet-fiber-backend/helper"
 	"strings"
 	"time"
@@ -38,6 +37,9 @@ func (p *Products) SetUpdatedAt() {
 
 func (p *Products) MergeProduct(exist *Products) {
 	switch {
+	case p.ID == "":
+		p.ID = exist.ID
+		fallthrough
 	case p.Title == "":
 		p.Title = exist.Title
 		fallthrough
@@ -48,7 +50,10 @@ func (p *Products) MergeProduct(exist *Products) {
 		p.Price = exist.Price
 		fallthrough
 	case p.CategoriesId == 0:
-		p.CategoriesId = exist.CategoriesId
+		p.CategoriesId = exist.Categories.Id
+	}
+	if len(p.Images) == 0 {
+		p.Images = exist.Images
 	}
 }
 
@@ -57,19 +62,20 @@ func (p *Products) FindDeleteImage(exist *Products) ([]*uuid.UUID, []string) {
 	var delURL = make([]string, 0)
 
 	// Create a map for faster lookup of existing image UUIDs
-	existImageMap := make(map[*uuid.UUID]struct{})
-	for _, u := range exist.Images {
-		existImageMap[u.ID] = struct{}{}
+	existImageMap := make(map[uuid.UUID]struct{})
+	if len(p.Images) >= 1 { //เป็นการเช็คว่า product ต้องมีรูปอย่างน้อย 1 รูป
+		for _, u := range p.Images {
+			existImageMap[*u.ID] = struct{}{}
+		}
 	}
 
 	// Iterate through new images and check if they exist in the existing map
-	for _, u := range p.Images {
-		if _, exists := existImageMap[u.ID]; !exists {
+	for _, u := range exist.Images {
+		if _, exists := existImageMap[*u.ID]; !exists {
 			delIds = append(delIds, u.ID) // Add the UUID to the delete list// Prefix to remove
 			prefix := "https://storage.googleapis.com/pheethy-dev-bucket/"
 			// Use strings.TrimLeft to remove the prefix
 			result := strings.SplitAfter(u.Url, prefix)
-			log.Println("result", result[1])
 			delURL = append(delURL, result[1])
 		}
 	}

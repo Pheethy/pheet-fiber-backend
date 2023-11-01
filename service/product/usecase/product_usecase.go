@@ -22,15 +22,15 @@ import (
 
 type productUsecase struct {
 	proRepo product.IProductRepository
-	fileUs file.IFileUsecase
-	cfg config.Iconfig
+	fileUs  file.IFileUsecase
+	cfg     config.Iconfig
 }
 
 func NewProductUsecase(proRepo product.IProductRepository, fileUs file.IFileUsecase, cfg config.Iconfig) product.IProductUsecase {
 	return productUsecase{
 		proRepo: proRepo,
-		fileUs: fileUs,
-		cfg: cfg,
+		fileUs:  fileUs,
+		cfg:     cfg,
 	}
 }
 
@@ -50,26 +50,26 @@ func (u productUsecase) CraeteProduct(ctx context.Context, req *models.Products,
 			if ok := u.validateFileType(ext); !ok {
 				return errors.New("file type is invalid")
 			}
-	
+
 			if file.Size > int64(u.cfg.App().FileLimit()) {
 				return fmt.Errorf("file size must less than %d MiB", int(math.Ceil(float64(u.cfg.App().FileLimit())/math.Pow(1024, 2))))
 			}
-	
+
 			filename := utils.RandFileName(ext)
 			reqFile = append(reqFile, &models.FileReq{
-				File: file,
+				File:        file,
 				Destination: constants.PRODUCT_IMAGE_DESTINETION + "/" + filename,
-				Extension: ext,
-				FileName: file.Filename,
+				Extension:   ext,
+				FileName:    file.Filename,
 			})
 		}
-		
+
 		/* upload images to google cloud platfrom */
 		newFileInfo, err := u.fileUs.UploadToGCP(reqFile)
 		if err != nil {
 			return fmt.Errorf("upload product image failed: %v", err.Error())
 		}
-		
+
 		var images = make([]*models.Image, 0)
 		for index := range newFileInfo {
 			image := &models.Image{
@@ -88,7 +88,49 @@ func (u productUsecase) CraeteProduct(ctx context.Context, req *models.Products,
 	return u.proRepo.CraeteProduct(ctx, req)
 }
 
-func (u productUsecase) UpdateProduct(ctx context.Context, product *models.Products) error {
+func (u productUsecase) UpdateProduct(ctx context.Context, product *models.Products, files []*multipart.FileHeader) error {
+	if len(files) > 0 {
+		var reqFile = make([]*models.FileReq, 0)
+		for _, file := range files {
+			ext := strings.TrimPrefix(filepath.Ext(file.Filename), ".")
+			if ok := u.validateFileType(ext); !ok {
+				return errors.New("file type is invalid")
+			}
+
+			if file.Size > int64(u.cfg.App().FileLimit()) {
+				return fmt.Errorf("file size must less than %d MiB", int(math.Ceil(float64(u.cfg.App().FileLimit())/math.Pow(1024, 2))))
+			}
+
+			filename := utils.RandFileName(ext)
+			reqFile = append(reqFile, &models.FileReq{
+				File:        file,
+				Destination: constants.PRODUCT_IMAGE_DESTINETION + "/" + filename,
+				Extension:   ext,
+				FileName:    file.Filename,
+			})
+		}
+
+		/* upload images to google cloud platfrom */
+		newFileInfo, err := u.fileUs.UploadToGCP(reqFile)
+		if err != nil {
+			return fmt.Errorf("upload product image failed: %v", err.Error())
+		}
+
+		var images = make([]*models.Image, 0)
+		for index := range newFileInfo {
+			image := &models.Image{
+				FilenName: newFileInfo[index].FileName,
+				Url:       newFileInfo[index].Url,
+				ProductId: product.ID,
+			}
+			image.NewId()
+			image.SetCreatedAt()
+			image.SetUpdatedAt()
+			images = append(images, image)
+		}
+
+		product.Images = images
+	}
 	return u.proRepo.UpdateProduct(ctx, product)
 }
 

@@ -134,6 +134,10 @@ func (u productUsecase) UpdateProduct(ctx context.Context, product *models.Produ
 	return u.proRepo.UpdateProduct(ctx, product)
 }
 
+func (u productUsecase) DeleteProduct(ctx context.Context, productId string) error {
+	return u.proRepo.DeleteProduct(ctx, productId)
+}
+
 func (u productUsecase) DeleteImages(ctx context.Context, ids []*uuid.UUID) error {
 	return u.proRepo.DeleteImages(ctx, ids)
 }

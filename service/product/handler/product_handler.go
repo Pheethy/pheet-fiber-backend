@@ -35,6 +35,9 @@ func (h productHandler) FetchOneProduct(c *fiber.Ctx) error {
 
 	product, err := h.proUs.FetchOneProduct(ctx, id)
 	if err != nil {
+		if ok := strings.Contains(err.Error(), "product not found"); ok {
+			return fiber.NewError(http.StatusNoContent, err.Error())
+		}
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -113,17 +116,18 @@ func (h productHandler) CreateProduct(c *fiber.Ctx) error {
 func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	var ctx = c.Context()
 	var newProduct = new(models.Products)
+	var productId = c.Params("product_id")
 	if err := c.BodyParser(newProduct); err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
-	var productId = c.Params("product_id")
+
 	/* ทำการรับ Files จาก Form */
 	form, err := c.MultipartForm()
 	if err != nil {
 		return fiber.NewError(http.StatusInternalServerError, "Cast Form Failed.")
 	}
 	files := form.File["files"]
-	
+
 	existProduct, err := h.proUs.FetchOneProduct(ctx, productId)
 	if err != nil {
 		return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("FetchOneFailed: %v", err))
@@ -131,6 +135,7 @@ func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	if existProduct == nil {
 		return fiber.NewError(http.StatusNoContent, "there is no product with this id.")
 	}
+
 	/* Merge Data && Images Managements */
 	newProduct.MergeProduct(existProduct)
 	delImages, delURL := newProduct.FindDeleteImage(existProduct)
@@ -161,6 +166,48 @@ func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 
 	resp := map[string]interface{}{
 		"message": "successful.",
+	}
+
+	return c.Status(http.StatusOK).JSON(resp)
+}
+
+func (h productHandler) DeleteProduct(c *fiber.Ctx) error {
+	var ctx = c.Context()
+	var productId = c.Params("product_id")
+
+	existProduct, err := h.proUs.FetchOneProduct(ctx, productId)
+	if err != nil {
+		return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("FetchOneFailed: %v", err))
+	}
+	if existProduct == nil {
+		return fiber.NewError(http.StatusNoContent, "there is no product with this id.")
+	}
+
+	var delReq = make([]*models.DeleteFileReq, 0)
+	if len(existProduct.Images) > 0 {
+		for index := range existProduct.Images {
+			url := existProduct.Images[index].Url
+			prefix := "https://storage.googleapis.com/pheethy-dev-bucket/"
+			result := strings.SplitAfter(url, prefix)
+			del := &models.DeleteFileReq{
+				Destination: result[1],
+			}
+			delReq = append(delReq, del)
+		}
+	}
+
+	if len(delReq) > 0 {
+		if err := h.fileUs.DeleteOnGCP(delReq); err != nil {
+			return fiber.NewError(http.StatusInternalServerError, err.Error())
+		}
+	}
+
+	if err := h.proUs.DeleteProduct(ctx, productId); err != nil {
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
+	}
+
+	resp := map[string]interface{}{
+		"message": "successful",
 	}
 
 	return c.Status(http.StatusOK).JSON(resp)

@@ -15,5 +15,6 @@ type IProductUsecase interface {
 	FetchAllProduct(ctx context.Context, args *sync.Map, paginate *helper.Paginator) ([]*models.Products, error)
 	CraeteProduct(ctx context.Context, req *models.Products, files []*multipart.FileHeader) error
 	UpdateProduct(ctx context.Context, product *models.Products, files []*multipart.FileHeader) error
+	DeleteProduct(ctx context.Context, productId string) error
 	DeleteImages(ctx context.Context, ids []*uuid.UUID) error
 }

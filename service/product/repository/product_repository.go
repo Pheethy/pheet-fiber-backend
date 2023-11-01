@@ -40,7 +40,7 @@ func (r productRepository) whereCond(args *sync.Map) ([]string, []interface{}) {
 			searchWord := strings.ToLower(v.(string))
 			searchWord = strings.ReplaceAll(searchWord, " ", "")
 			valArgs = append(valArgs, searchWord)
-
+			valArgs = append(valArgs, searchWord)
 		}
 	}
 
@@ -79,6 +79,7 @@ func (r productRepository) FetchAllProduct(ctx context.Context, args *sync.Map, 
 			FROM
 				products
 			%s
+			%s
 		) as products
 		JOIN
 		 	images
@@ -90,6 +91,7 @@ func (r productRepository) FetchAllProduct(ctx context.Context, args *sync.Map, 
 	`,
 		orm.GetSelector(models.Products{}),
 		orm.GetSelector(models.Image{}),
+		where,
 		paginateSQL,
 		where,
 	)
@@ -441,6 +443,91 @@ func (r productRepository) updateProductsCategories(ctx context.Context, tx *sql
 	return nil
 }
 
+func (r productRepository) DeleteProduct(ctx context.Context, productId string) error {
+	tx, err := r.db.Beginx()
+	if err != nil {
+		return err
+	}
+	
+	if err := r.deleteProductsCategories(ctx, tx, productId); err != nil {
+		return fmt.Errorf("delete products_categories failed: %v", err)
+	}
+	if err := r.deleteImages(ctx, tx, productId); err != nil {
+		return fmt.Errorf("delete images failed: %v", err)
+	}
+	if err := r.deleteProduct(ctx, tx, productId); err != nil {
+		return fmt.Errorf("delete product failed: %v", err)
+	}
+
+	return tx.Commit()
+}
+
+func (r productRepository) deleteProduct(ctx context.Context, tx *sqlx.Tx, productId string) error {
+	sql := `
+		DELETE
+		FROM
+			products
+		WHERE
+			id=$1::text;
+	`
+	stmt, err := tx.PrepareContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, productId); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func (r productRepository) deleteImages(ctx context.Context, tx *sqlx.Tx, productId string) error {
+	sql := `
+		DELETE
+		FROM
+			images
+		WHERE
+			product_id=$1::text;
+	`
+	stmt, err := tx.PrepareContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, productId); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
+func (r productRepository) deleteProductsCategories(ctx context.Context, tx *sqlx.Tx, productId string) error {
+	sql := `
+		DELETE
+		FROM
+			products_categories
+		WHERE
+			product_id=$1::text;
+	`
+	stmt, err := tx.PrepareContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, productId); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
+}
+
 func (r productRepository) DeleteImages(ctx context.Context, ids []*uuid.UUID) error {
 	tx, err := r.db.Beginx()
 	if err != nil {
@@ -489,7 +576,7 @@ func (r productRepository) orm(ctx context.Context, rows *sqlx.Rows) (*models.Pr
 	}
 
 	if len(products) == 0 {
-		return nil, fmt.Errorf("product not found: %v", err)
+		return nil, errors.New("product not found")
 	}
 
 	return products[0], nil

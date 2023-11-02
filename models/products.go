@@ -21,8 +21,6 @@ type Products struct {
 
 	Categories *Categories `json:"categories" db:"-"` /* สำหรับการ Fetch Category มา Fill เพื่อดูว่า Product อยู่ Categories ไหน */
 	Images     []*Image    `json:"images" db:"-" fk:"fk_field1:ID, fk_field2:ProductId"`
-
-	DelImages []*uuid.UUID /* สำหรับ เก็บ id image ที่จะลบ */
 }
 
 func (p *Products) SetCreatedAt() {

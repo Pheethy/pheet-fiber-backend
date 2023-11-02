@@ -81,7 +81,7 @@ func (r appInfoRepository) InsertCategories(ctx context.Context, cats []*models.
 
 	if len(cats) > 0 && cats != nil {
 		for index := range cats {
-			if err := tx.QueryRowContext(ctx, sql, cats[index].Title).Scan(&cats[index].Id); err != nil {
+			if err := stmt.QueryRowContext(ctx, sql, cats[index].Title).Scan(&cats[index].Id); err != nil {
 				log.Fatal(err)
 				tx.Rollback()
 			}

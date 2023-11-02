@@ -199,7 +199,7 @@ func (r productRepository) CraeteProduct(ctx context.Context, req *models.Produc
 		return fmt.Errorf("begin failed: %v", err)
 	}
 
-	if err := r.createProduct(ctx, tx, req); err != nil {
+	if err := r.createProduct(ctx, req); err != nil {
 		return fmt.Errorf("create product failed: %v", err)
 	}
 
@@ -207,45 +207,44 @@ func (r productRepository) CraeteProduct(ctx context.Context, req *models.Produc
 		return fmt.Errorf("create products_categories failed: %v", err)
 	}
 
-	if err := r.upsertImages(ctx, tx, req.Images); err != nil {
+	if err := r.upsertImages(ctx, tx, req); err != nil {
 		return fmt.Errorf("create images failed: %v", err)
 	}
 
 	return tx.Commit()
 }
 
-func (r productRepository) createProduct(ctx context.Context, tx *sqlx.Tx, product *models.Products) error {
+func (r productRepository) createProduct(ctx context.Context, product *models.Products) error {
 	sql := `
-		INSERT INTO products (id, title, description, price, created_at, updated_at)
+		INSERT INTO products (title, description, price, created_at, updated_at)
 		VALUES(
 			$1::text,
 			$2::text,
-			$3::text,
-			$4::float,
-			$5::timestamp,
-			$6::timestamp
+			$3::float,
+			$4::timestamp,
+			$5::timestamp
 		)
+		RETURNING "id";
 	`
-	stmt, err := tx.PreparexContext(ctx, sql)
+	stmt, err := r.db.PreparexContext(ctx, sql)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
-	if _, err := stmt.ExecContext(ctx,
-		product.ID,
+	if err := stmt.QueryRowContext(ctx,
 		product.Title,
 		product.Description,
 		product.Price,
 		product.CreatedAt,
 		product.UpdatedAt,
-	); err != nil {
+	).Scan(&product.ID); err != nil {
 		if strings.Contains(err.Error(), constants.ERROR_PQ_UNIQUE_PRODUCTNAME) {
 			return errors.New(constants.ERROR_PRODUCTNAME_WAS_DUPLICATE)
 		}
-		tx.Rollback()
 		return err
 	}
+
 	return nil
 }
 func (r productRepository) createProductsCategories(ctx context.Context, tx *sqlx.Tx, product *models.Products) error {
@@ -277,7 +276,7 @@ func (r productRepository) createProductsCategories(ctx context.Context, tx *sql
 	return nil
 }
 
-func (r productRepository) upsertImages(ctx context.Context, tx *sqlx.Tx, images []*models.Image) error {
+func (r productRepository) upsertImages(ctx context.Context, tx *sqlx.Tx, product *models.Products) error {
 	sql := `
 		INSERT INTO images (
 			id,
@@ -306,20 +305,20 @@ func (r productRepository) upsertImages(ctx context.Context, tx *sqlx.Tx, images
 		return fmt.Errorf("prepare failed: %v", err)
 	}
 
-	for index := range images {
+	for index := range product.Images {
 		if _, err := stmt.ExecContext(ctx,
 			//create
-			images[index].ID,
-			images[index].FilenName,
-			images[index].Url,
-			images[index].ProductId,
-			images[index].CreatedAt,
-			images[index].UpdatedAt,
+			product.Images[index].ID,
+			product.Images[index].FilenName,
+			product.Images[index].Url,
+			product.ID,
+			product.Images[index].CreatedAt,
+			product.Images[index].UpdatedAt,
 			//update
-			images[index].FilenName,
-			images[index].Url,
-			images[index].ProductId,
-			images[index].UpdatedAt,
+			product.Images[index].FilenName,
+			product.Images[index].Url,
+			product.ID,
+			product.Images[index].UpdatedAt,
 		); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("exec failed: %v", err)
@@ -339,7 +338,7 @@ func (r productRepository) UpdateProduct(ctx context.Context, product *models.Pr
 		return fmt.Errorf("update product failed: %v", err)
 	}
 
-	if err := r.upsertImages(ctx, tx, product.Images); err != nil {
+	if err := r.upsertImages(ctx, tx, product); err != nil {
 		return fmt.Errorf("update image failed: %v", err)
 	}
 
@@ -448,7 +447,7 @@ func (r productRepository) DeleteProduct(ctx context.Context, productId string) 
 	if err != nil {
 		return err
 	}
-	
+
 	if err := r.deleteProductsCategories(ctx, tx, productId); err != nil {
 		return fmt.Errorf("delete products_categories failed: %v", err)
 	}

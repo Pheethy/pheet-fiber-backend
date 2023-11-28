@@ -42,7 +42,7 @@ func (r Route) RegisterFile(handler file.IFileHandler, m middleware.ImiddlewareH
 func (r Route) RegisterProduct(handler product.IProductHandler, m middleware.ImiddlewareHandler) {
 	r.e.Get("/product/:product_id", m.ApiKeyAuth(), handler.FetchOneProduct)
 	r.e.Get("/product", m.ApiKeyAuth(), handler.FetchAllProduct)
-	r.e.Post("/product", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(2), handler.CreateProduct)
-	r.e.Put("/product/:product_id", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(2), handler.UpdateProduct)
-	r.e.Delete("/product/:product_id", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(2), handler.DeleteProduct)
+	r.e.Post("/product", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.CreateProduct)
+	r.e.Put("/product/:product_id", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.UpdateProduct)
+	r.e.Delete("/product/:product_id", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.DeleteProduct)
 }

@@ -24,6 +24,10 @@ import (
 	_product_repo "pheet-fiber-backend/service/product/repository"
 	_product_usecase "pheet-fiber-backend/service/product/usecase"
 
+	_order_handler "pheet-fiber-backend/service/order/handler"
+	_order_repo "pheet-fiber-backend/service/order/repository"
+	_order_usecase "pheet-fiber-backend/service/order/usecase"
+
 	_appinfo_handler "pheet-fiber-backend/service/appinfo/handler"
 	_appinfo_repo "pheet-fiber-backend/service/appinfo/repository"
 	_appinfo_usecase "pheet-fiber-backend/service/appinfo/usecase"
@@ -54,6 +58,7 @@ func main() {
 	userRepo := _users_repo.NewUsersRepository(psqlDB)
 	infoRepo := _appinfo_repo.NewAppInfoRepository(psqlDB)
 	proRepo := _product_repo.NewProductRepository(psqlDB, cfg)
+	orderRepo := _order_repo.NewOrderRepository(psqlDB, cfg)
 
 	/* Init Usecase */
 	midUs := _middle_usecase.NewMiddlewareUsecase(midRepo)
@@ -61,6 +66,7 @@ func main() {
 	infoUs := _appinfo_usecase.NewAppInfoUsecase(cfg, infoRepo)
 	fileUs := _file_usecase.NewFileUsecase(cfg)
 	proUs := _product_usecase.NewProductUsecase(proRepo, fileUs, cfg)
+	orderUs := _order_usecase.NewOrderUsecase(orderRepo, proRepo)
 
 	/* Init Handler */
 	middleware := _middle_handler.NewMiddlewareHandler(cfg, midUs)
@@ -69,6 +75,7 @@ func main() {
 	infoHandler := _appinfo_handler.NewAppInfoHandler(cfg, infoUs)
 	fileHandler := _file_handler.NewFileHandler(cfg, fileUs)
 	proHandler := _product_handler.NewProductHandler(cfg, proUs, fileUs)
+	orderHandler := _order_handler.NewOrderHandler(orderUs)
 
 	/* Init Validator */
 
@@ -97,6 +104,7 @@ func main() {
 	r.RegisterAppInfo(infoHandler, middleware)
 	r.RegisterFile(fileHandler, middleware)
 	r.RegisterProduct(proHandler, middleware)
+	r.RegisterOrder(orderHandler, middleware)
 
 	// Graceful Shutdown
 	var c = make(chan os.Signal, 1)

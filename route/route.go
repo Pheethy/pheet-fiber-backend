@@ -4,6 +4,7 @@ import (
 	"pheet-fiber-backend/middleware"
 	"pheet-fiber-backend/service/appinfo"
 	"pheet-fiber-backend/service/file"
+	"pheet-fiber-backend/service/order"
 	"pheet-fiber-backend/service/product"
 	"pheet-fiber-backend/service/users"
 
@@ -45,4 +46,8 @@ func (r Route) RegisterProduct(handler product.IProductHandler, m middleware.Imi
 	r.e.Post("/product", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.CreateProduct)
 	r.e.Put("/product/:product_id", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.UpdateProduct)
 	r.e.Delete("/product/:product_id", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.DeleteProduct)
+}
+
+func (r Route) RegisterOrder(handler order.IOrderHandler, m middleware.ImiddlewareHandler) {
+	
 }

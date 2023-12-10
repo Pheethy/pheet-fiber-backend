@@ -3,7 +3,7 @@ package product
 import (
 	"context"
 	"mime/multipart"
-	"pheet-fiber-backend/helper"
+	"github.com/Pheethy/psql/helper"
 	"pheet-fiber-backend/models"
 	"sync"
 

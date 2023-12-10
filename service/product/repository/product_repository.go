@@ -6,14 +6,14 @@ import (
 	"fmt"
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/constants"
-	"pheet-fiber-backend/helper"
 	"pheet-fiber-backend/models"
-	"pheet-fiber-backend/orm"
 	"pheet-fiber-backend/service/product"
 	"strings"
 	"sync"
-
-	"github.com/BlackMocca/sqlx"
+	
+	"github.com/Pheethy/psql/helper"
+	"github.com/Pheethy/psql/orm"
+	"github.com/Pheethy/sqlx"
 	"github.com/gofrs/uuid"
 )
 

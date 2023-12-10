@@ -1,7 +1,7 @@
 package models
 
 import (
-	"pheet-fiber-backend/helper"
+	"github.com/Pheethy/psql/helper"
 	"time"
 )
 

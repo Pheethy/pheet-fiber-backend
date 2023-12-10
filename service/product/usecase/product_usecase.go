@@ -9,14 +9,14 @@ import (
 	"path/filepath"
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/constants"
-	"pheet-fiber-backend/helper"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/file"
 	"pheet-fiber-backend/service/product"
 	"pheet-fiber-backend/service/utils"
 	"strings"
 	"sync"
-
+	
+	"github.com/Pheethy/psql/helper"
 	"github.com/gofrs/uuid"
 )
 

@@ -8,7 +8,7 @@ import (
 	"pheet-fiber-backend/service/users"
 	"time"
 
-	"github.com/BlackMocca/sqlx"
+	"github.com/Pheethy/sqlx"
 )
 
 type userReq struct {
@@ -34,7 +34,7 @@ func InsertUser(db *sqlx.DB, req *models.UserRegisterReq, IsAdmin bool) users.IU
 }
 
 func newCustomer(db *sqlx.DB, req *models.UserRegisterReq) users.IUsersPattern {
-	return &customer {
+	return &customer{
 		userReq: &userReq{
 			req: req,
 			db:  db,
@@ -43,7 +43,7 @@ func newCustomer(db *sqlx.DB, req *models.UserRegisterReq) users.IUsersPattern {
 }
 
 func newAdmin(db *sqlx.DB, req *models.UserRegisterReq) users.IUsersPattern {
-	return &admin {
+	return &admin{
 		userReq: &userReq{
 			req: req,
 			db:  db,

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/BlackMocca/sqlx"
+	"github.com/Pheethy/sqlx"
 )
 
 type appInfoRepository struct {

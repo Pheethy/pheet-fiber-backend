@@ -2,7 +2,7 @@ package product
 
 import (
 	"context"
-	"pheet-fiber-backend/helper"
+	"github.com/Pheethy/psql/helper"
 	"pheet-fiber-backend/models"
 	"sync"
 

@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"net/http"
 	"pheet-fiber-backend/config"
-	"pheet-fiber-backend/helper"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/file"
 	"pheet-fiber-backend/service/product"
 	"strconv"
 	"strings"
 	"sync"
-
+	
 	"github.com/gofiber/fiber/v2"
+	"github.com/Pheethy/psql/helper"
 )
 
 type productHandler struct {

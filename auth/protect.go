@@ -11,7 +11,12 @@ import (
 func Protect(signature []byte) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		s := c.GetReqHeaders()
-		tokenz := strings.TrimPrefix(s["Authorization"], "Bearer ")
+		// Check if Authorization header exists and has at least one value
+		authHeaders, ok := s["Authorization"]
+		if !ok || len(authHeaders) == 0 {
+			return fiber.ErrUnauthorized
+		}
+		tokenz := strings.TrimPrefix(authHeaders[0], "Bearer ")
 		
 		_, err := jwt.Parse(tokenz, func(token *jwt.Token) (interface{}, error) {
 			//เช็ค Method ว่าเป็น MethodHMAC ไหม

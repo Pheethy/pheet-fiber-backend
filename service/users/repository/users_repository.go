@@ -7,8 +7,8 @@ import (
 	"pheet-fiber-backend/service/users"
 	"pheet-fiber-backend/service/users/pattern"
 
+	"github.com/Pheethy/sqlx"
 	"github.com/gofrs/uuid"
-	"github.com/BlackMocca/sqlx"
 )
 
 type usersRepository struct {

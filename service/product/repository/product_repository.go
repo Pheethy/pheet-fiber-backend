@@ -121,6 +121,7 @@ func (r productRepository) FetchOneProduct(ctx context.Context, id string) (*mod
 	sql := fmt.Sprintf(`
 		SELECT
 			%s,
+			%s,
 			%s
 		FROM
 			products
@@ -128,11 +129,26 @@ func (r productRepository) FetchOneProduct(ctx context.Context, id string) (*mod
 		 	images
 		ON
 			products.id = images.product_id
+		JOIN
+			(
+				SELECT
+					categories.*,
+					products_categories.product_id "product_id"
+				FROM
+					categories
+				JOIN
+					products_categories
+				ON
+					categories.id = products_categories.category_id
+			) AS categories
+		ON
+			products.id = categories.product_id
 		WHERE
 			products.id = $1
 	`,
 		orm.GetSelector(models.Products{}),
 		orm.GetSelector(models.Image{}),
+		orm.GetSelector(models.Categories{}),
 	)
 
 	stmt, err := r.db.PreparexContext(ctx, sql)
@@ -563,17 +579,7 @@ func (r productRepository) orm(ctx context.Context, rows *sqlx.Rows) (*models.Pr
 	}
 
 	products := mapper.GetData().([]*models.Products)
-
-	if len(products) > 0 {
-		for index := range products {
-			categories, err := r.FetchCategoriesByProductId(ctx, products[index].ID)
-			if err != nil {
-				return nil, err
-			}
-			products[index].Categories = categories
-		}
-	}
-
+	
 	if len(products) == 0 {
 		return nil, errors.New("product not found")
 	}

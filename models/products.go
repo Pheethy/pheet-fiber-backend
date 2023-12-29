@@ -19,7 +19,7 @@ type Products struct {
 	UpdatedAt    *helper.Timestamp `json:"updated_at" db:"updated_at" type:"timestamp"`
 	CategoriesId int64             `json:"categories_id" form:"categories_id" db:"-" type:"int64"` /* categories_id สำหรับการสร้าง products_categories */
 
-	Categories *Categories `json:"categories" db:"-"` /* สำหรับการ Fetch Category มา Fill เพื่อดูว่า Product อยู่ Categories ไหน */
+	Categories *Categories `json:"categories" db:"-" fk:"fk_field1:ID, fk_field2:ProductId"` /* สำหรับการ Fetch Category มา Fill เพื่อดูว่า Product อยู่ Categories ไหน */
 	Images     []*Image    `json:"images" db:"-" fk:"fk_field1:ID, fk_field2:ProductId"`
 }
 

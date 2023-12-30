@@ -8,6 +8,10 @@ import (
 	"github.com/gofrs/uuid"
 )
 
+const (
+	FIELD_PRODUCTS_ID = "ID"
+)
+
 // *Entity เพื่อจะส่งข้อมูลออกไป *//
 type Products struct {
 	TableName    struct{}          `db:"products" json:"-" pk:"ID"`

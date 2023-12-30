@@ -49,5 +49,6 @@ func (r Route) RegisterProduct(handler product.IProductHandler, m middleware.Imi
 }
 
 func (r Route) RegisterOrder(handler order.IOrderHandler, m middleware.ImiddlewareHandler) {
-	
+	r.e.Get("/order", handler.FetchAllOrder)
+	r.e.Get("/order/:order_id", handler.FetchOneOrder)
 }

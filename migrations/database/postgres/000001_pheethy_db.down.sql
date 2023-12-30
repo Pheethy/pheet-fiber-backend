@@ -18,6 +18,7 @@ DROP TABLE IF EXISTS "categories" CASCADE;
 DROP TABLE IF EXISTS "products_categories" CASCADE;
 DROP TABLE IF EXISTS "images" CASCADE;
 DROP TABLE IF EXISTS "products_orders" CASCADE;
+DROP TABLE IF EXISTS "transfer_slip" CASCADE;
 
 DROP SEQUENCE IF EXISTS users_id_seq;
 DROP SEQUENCE IF EXISTS products_id_seq;

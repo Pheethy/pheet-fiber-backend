@@ -92,17 +92,24 @@ CREATE TABLE "orders" (
   "user_id" VARCHAR NOT NULL,
   "contact" VARCHAR NOT NULL,
   "address" VARCHAR NOT NULL,
-  "transfer_slip" JSONB,
   "status" order_status NOT NULL,
   "created_at" TIMESTAMP NOT NULL DEFAULT now(),
   "updated_at" TIMESTAMP NOT NULL DEFAULT now()
 );
 
+CREATE TABLE "transfer_slip" (
+  "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "order_id" VARCHAR NOT NULL UNIQUE,
+  "filename" VARCHAR NOT NULL,
+  "url" VARCHAR NOT NULL,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+
 CREATE TABLE "products_orders" (
   "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
   "order_id" VARCHAR NOT NULL,
-  "qty" INT NOT NULL DEFAULT 1,
-  "product" JSONB
+  "product_id" VARCHAR NOT NULL,
+  "qty" INT NOT NULL DEFAULT 1
 );
 
 ALTER TABLE "products_categories" ADD FOREIGN KEY ("product_id") REFERENCES "products" ("id");
@@ -112,6 +119,8 @@ ALTER TABLE "oauth" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "images" ADD FOREIGN KEY ("product_id") REFERENCES "products" ("id");
 ALTER TABLE "orders" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");
 ALTER TABLE "products_orders" ADD FOREIGN KEY ("order_id") REFERENCES "orders" ("id");
+ALTER TABLE "products_orders" ADD FOREIGN KEY ("product_id") REFERENCES "products" ("id");
+ALTER TABLE "transfer_slip" ADD FOREIGN KEY ("order_id") REFERENCES "orders" ("id");
 
 CREATE TRIGGER set_updated_at_timestamp_users_table BEFORE UPDATE ON "users" FOR EACH ROW EXECUTE PROCEDURE set_update_at_column();
 CREATE TRIGGER set_updated_at_timestamp_oauth_table BEFORE UPDATE ON "oauth" FOR EACH ROW EXECUTE PROCEDURE set_update_at_column();

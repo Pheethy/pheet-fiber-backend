@@ -3,6 +3,7 @@ package handler
 import (
 	"net/http"
 	"pheet-fiber-backend/service/order"
+	"strconv"
 	"sync"
 
 	"github.com/Pheethy/psql/helper"
@@ -23,6 +24,21 @@ func (o orderHandler) FetchAllOrder(c *fiber.Ctx) error {
 	var ctx = c.Context()
 	var args = new(sync.Map)
 	var paginator = new(helper.Paginator)
+	var page, pageErr = strconv.Atoi(c.Query("page"))
+	var perPage, perPageErr = strconv.Atoi(c.Query("per_page"))
+	var userId = c.Query("user_id")
+
+	if userId != "" {
+		args.Store("user_id", userId)
+	}
+
+	if pageErr == nil {
+		paginator.Page = page
+	}
+
+	if perPageErr == nil {
+		paginator.PerPage = perPage
+	}
 
 	orders, err := o.orderUs.FetchAllOrder(ctx, args, paginator)
 	if err != nil {
@@ -30,7 +46,11 @@ func (o orderHandler) FetchAllOrder(c *fiber.Ctx) error {
 	}
 
 	resp := map[string]interface{}{
-		"orders": orders,
+		"orders":     orders,
+		"page":       paginator.Page,
+		"per_page":   paginator.PerPage,
+		"total_page": paginator.TotalPages,
+		"total_rows": paginator.TotalEntrySizes,
 	}
 
 	return c.Status(http.StatusOK).JSON(resp)

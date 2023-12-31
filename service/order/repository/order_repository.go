@@ -7,6 +7,7 @@ import (
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/order"
+	"strings"
 	"sync"
 
 	"github.com/Pheethy/psql/helper"
@@ -26,42 +27,92 @@ func NewOrderRepository(db *sqlx.DB, cfg config.Iconfig) order.IOrderRepository 
 	}
 }
 
+func (o orderRepository) whereCond(args *sync.Map) ([]string, []interface{}) {
+	var conds = []string{}
+	var valArgs []interface{}
+
+	if v, ok := args.Load("user_id"); ok {
+		if v != nil {
+			cond := "LOWER(orders.user_id) = ?"
+			conds = append(conds, cond)
+			userId := strings.ToLower(v.(string))
+			valArgs = append(valArgs, userId)
+			valArgs = append(valArgs, userId)
+		}
+	}
+
+	return conds, valArgs
+}
+
 func (o orderRepository) FetchAllOrder(ctx context.Context, args *sync.Map, paginator *helper.Paginator) ([]*models.Order, error) {
+	conds, vars := o.whereCond(args)
+	var where string
+	var paginateSQL string
+	
+	if len(conds) > 0 {
+		where += "WHERE " + strings.Join(conds, " AND ")
+	}
+	if paginator != nil {
+		var limit = int(paginator.PerPage)
+		var skipItem = (int(paginator.Page) - 1) * int(paginator.PerPage)
+		paginateSQL = fmt.Sprintf(`
+			LIMIT %d
+			OFFSET %d
+			`,
+			limit,
+			skipItem,
+		)
+	}
+
 	sql := fmt.Sprintf(`
-	SELECT
-		%s,
-		%s,
+		SELECT
+			%s,
+			%s,
+			%s,
+			orders.total_row
+		FROM
+			(
+				SELECT
+					*,
+					COUNT(*) OVER() as "total_row"
+				FROM
+					orders
+				%s
+				%s
+			) as orders
+		JOIN
+			transfer_slip
+		ON
+			orders.id = transfer_slip.order_id
+		JOIN
+			products_orders
+		ON
+			orders.id = products_orders.order_id
 		%s
-	FROM
-		orders
-	JOIN
-		transfer_slip
-	ON
-		orders.id = transfer_slip.order_id
-	JOIN
-		products_orders
-	ON
-		orders.id = products_orders.order_id
 	`,
 		orm.GetSelector(models.Order{}),
 		orm.GetSelector(models.TransferSlip{}),
 		orm.GetSelector(models.ProductOrder{}),
+		where,
+		paginateSQL,
+		where,
 	)
-
+	
+	sql = sqlx.Rebind(sqlx.DOLLAR, sql) /* ทำการแปลงจาก ? -> $num */
 	stmt, err := o.db.PreparexContext(ctx, sql)
 	if err != nil {
 		return nil, err
 	}
 	defer stmt.Close()
 
-	rows, err := stmt.QueryxContext(ctx)
+	rows, err := stmt.QueryxContext(ctx, vars...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 	
 	options := orm.NewMapperOption()
-	orders, err := o.orms(ctx, rows, options)
+	orders, err := o.orms(ctx, rows, options, paginator)
 	if err != nil {
 		return nil, err
 	}
@@ -142,10 +193,13 @@ func (o orderRepository) FetchOneOrder(ctx context.Context, orderId string) (*mo
 	return order, nil
 }
 
-func (o orderRepository) orms(ctx context.Context, rows *sqlx.Rows, options orm.MapperOption) ([]*models.Order, error) {
+func (o orderRepository) orms(ctx context.Context, rows *sqlx.Rows, options orm.MapperOption, paginator *helper.Paginator) ([]*models.Order, error) {
 	mapper, err := orm.OrmContext(ctx, new(models.Order), rows, options)
 	if err != nil {
 		return nil, err
+	}
+	if paginator != nil {
+		paginator.SetPaginatorByAllRows(mapper.GetPaginateTotal())
 	}
 	orders := mapper.GetData().([]*models.Order)
 	if len(orders) == 0 {

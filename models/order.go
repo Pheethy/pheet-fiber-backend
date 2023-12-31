@@ -1,8 +1,9 @@
 package models
 
 import (
-	"github.com/Pheethy/psql/helper"
 	"time"
+
+	"github.com/Pheethy/psql/helper"
 )
 
 type Order struct {
@@ -42,6 +43,17 @@ type ProductOrder struct {
 func (p *Order) SetCreatedAt() {
 	time := helper.NewTimestampFromTime(time.Now())
 	p.CreatedAt = &time
+}
+
+func (o *Order) FindingTotalPaid() {
+	if len(o.ProductsOrders) > 0 {
+		var totalPaid float64
+		for index := range o.ProductsOrders {
+			result := o.ProductsOrders[index].Products.Price * float64(o.ProductsOrders[index].Qty)
+			totalPaid += result
+		}
+		o.TotalPaid = totalPaid
+	}
 }
 
 func (p *Order) SetUpdatedAt() {

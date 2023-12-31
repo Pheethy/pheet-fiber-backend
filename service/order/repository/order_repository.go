@@ -193,6 +193,10 @@ func (o orderRepository) FetchOneOrder(ctx context.Context, orderId string) (*mo
 	return order, nil
 }
 
+func (o orderRepository) UpsertOrder(ctx context.Context, order *models.Order) error {
+	return nil
+}
+
 func (o orderRepository) orms(ctx context.Context, rows *sqlx.Rows, options orm.MapperOption, paginator *helper.Paginator) ([]*models.Order, error) {
 	mapper, err := orm.OrmContext(ctx, new(models.Order), rows, options)
 	if err != nil {

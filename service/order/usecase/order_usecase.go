@@ -27,5 +27,12 @@ func (o orderUsecase) FetchAllOrder(ctx context.Context, args *sync.Map, paginat
 }
 
 func (o orderUsecase) FetchOneOrder(ctx context.Context, orderId string) (*models.Order, error) {
-	return o.orderRepo.FetchOneOrder(ctx, orderId)
+	order, err := o.orderRepo.FetchOneOrder(ctx, orderId)
+	if err != nil {
+		return nil, err
+	}
+	/* ทำการหาราคารวมของ order */
+	order.FindingTotalPaid()
+
+	return order, nil
 }

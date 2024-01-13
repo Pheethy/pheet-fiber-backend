@@ -10,7 +10,7 @@ import (
 	"pheet-fiber-backend/service/product"
 	"strings"
 	"sync"
-	
+
 	"github.com/Pheethy/psql/helper"
 	"github.com/Pheethy/psql/orm"
 	"github.com/Pheethy/sqlx"
@@ -95,7 +95,6 @@ func (r productRepository) FetchAllProduct(ctx context.Context, args *sync.Map, 
 		paginateSQL,
 		where,
 	)
-
 	sql = sqlx.Rebind(sqlx.DOLLAR, sql)
 	stmt, err := r.db.PreparexContext(ctx, sql)
 	if err != nil {
@@ -186,7 +185,7 @@ func (r productRepository) FetchCategoriesByProductId(ctx context.Context, produ
 	`,
 		orm.GetSelector(models.Categories{}),
 	)
-
+	
 	stmt, err := r.db.PreparexContext(ctx, sql)
 	if err != nil {
 		return nil, fmt.Errorf("prepare failed: %v", err)
@@ -579,7 +578,7 @@ func (r productRepository) orm(ctx context.Context, rows *sqlx.Rows) (*models.Pr
 	}
 
 	products := mapper.GetData().([]*models.Products)
-	
+
 	if len(products) == 0 {
 		return nil, errors.New("product not found")
 	}
@@ -619,7 +618,7 @@ func (r productRepository) orms(ctx context.Context, rows *sqlx.Rows, paginator 
 	for a := 0; a < len(products); a++ {
 		//handler err โดยการรับค่า err จาก Channel errCh
 		if err := <-errCh; err != nil {
-			return nil, fmt.Errorf("err: %v", err)
+			return nil, fmt.Errorf("errThis: %v", err)
 		}
 	}
 

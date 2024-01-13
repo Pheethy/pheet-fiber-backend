@@ -194,6 +194,45 @@ func (o orderRepository) FetchOneOrder(ctx context.Context, orderId string) (*mo
 }
 
 func (o orderRepository) UpsertOrder(ctx context.Context, order *models.Order) error {
+	if err := o.createOrder(ctx, order); err != nil {
+		return err
+	}
+
+	
+	return nil
+}
+
+func (o orderRepository) createOrder(ctx context.Context, order *models.Order) error {
+	sql := `
+		INSERT INTO orders (user_id, address, contact, status, created_at, updated_at)
+		VALUES(
+			$1::text,
+			$2::text,
+			$3::text,
+			$4::text,
+			$5::timestamp,
+			$6::timestamp
+		)
+		RETURNING "id";
+	`
+
+	stmt, err := o.db.PreparexContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if err := stmt.QueryRowContext(ctx,
+		order.UserId,
+		order.Address,
+		order.Contact,
+		order.Status,
+		order.CreatedAt,
+		order.UpdatedAt,
+	).Scan(&order.Id); err != nil {
+		return err
+	}
+
 	return nil
 }
 

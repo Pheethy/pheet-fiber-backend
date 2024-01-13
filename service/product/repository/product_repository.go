@@ -70,6 +70,7 @@ func (r productRepository) FetchAllProduct(ctx context.Context, args *sync.Map, 
 		SELECT
 			%s,
 			%s,
+			%s,
 			products.total_row
 		FROM
 		(
@@ -85,12 +86,27 @@ func (r productRepository) FetchAllProduct(ctx context.Context, args *sync.Map, 
 		 	images
 		ON
 			products.id = images.product_id
+		JOIN
+			(
+				SELECT
+					categories.*,
+					products_categories.product_id "product_id"
+				FROM
+					categories
+				JOIN
+					products_categories
+				ON
+					products_categories.category_id = categories.id
+			) AS categories
+		ON
+			products.id = categories.product_id
 		%s
 		ORDER BY
 			products.created_at ASC
 	`,
 		orm.GetSelector(models.Products{}),
 		orm.GetSelector(models.Image{}),
+		orm.GetSelector(models.Categories{}),
 		where,
 		paginateSQL,
 		where,
@@ -597,46 +613,9 @@ func (r productRepository) orms(ctx context.Context, rows *sqlx.Rows, paginator 
 		paginator.SetPaginatorByAllRows(mapper.GetPaginateTotal())
 	}
 
-	/* ทำ worker pool */
-	var jobsCh = make(chan *models.Products, len(products))
-	var errCh = make(chan error, len(products))
-
-	/* นำ products ใส่ไปใน jobs channel */
-	for _, r := range products {
-		jobsCh <- r
-	}
-	close(jobsCh)
-
-	/* สร้าง worker */
-	var worker int = 10
-	for i := 0; i < worker; i++ {
-		//working zone
-		go r.fillCategories(ctx, jobsCh, errCh)
-	}
-
-	/* สร้าง loop สำหรับการรับ error */
-	for a := 0; a < len(products); a++ {
-		//handler err โดยการรับค่า err จาก Channel errCh
-		if err := <-errCh; err != nil {
-			return nil, fmt.Errorf("errThis: %v", err)
-		}
-	}
-
 	if len(products) == 0 {
 		return nil, fmt.Errorf("product not found: %v", err)
 	}
 
 	return products, nil
-}
-
-func (r productRepository) fillCategories(ctx context.Context, jobs <-chan *models.Products, errs chan<- error) {
-	for job := range jobs {
-		category, err := r.FetchCategoriesByProductId(ctx, job.ID)
-		if err != nil {
-			errs <- err
-		}
-		job.Categories = category
-		/* กรณีไม่มี error ก็ต้องทำการ return ค่า nil ออกไป errCh เพราะเราประกาศรับค่าไว้ */
-		errs <- nil
-	}
 }

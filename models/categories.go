@@ -7,7 +7,7 @@ type Categories struct {
 	Id        int64      `json:"id" db:"id" type:"int64"`
 	Title     string   `json:"title" db:"title" type:"string"`
 
-	ProductId  string     `json:"-" db:"-" type:"string"`
+	ProductId  string     `json:"-" db:"product_id" type:"string"`
 }
 
 type ProductsCategories struct {

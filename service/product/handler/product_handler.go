@@ -4,15 +4,16 @@ import (
 	"fmt"
 	"net/http"
 	"pheet-fiber-backend/config"
+	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/file"
 	"pheet-fiber-backend/service/product"
 	"strconv"
 	"strings"
 	"sync"
-	
-	"github.com/gofiber/fiber/v2"
+
 	"github.com/Pheethy/psql/helper"
+	"github.com/gofiber/fiber/v2"
 )
 
 type productHandler struct {
@@ -130,10 +131,10 @@ func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 
 	existProduct, err := h.proUs.FetchOneProduct(ctx, productId)
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError, fmt.Sprintf("FetchOneFailed: %v", err))
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 	if existProduct == nil {
-		return fiber.NewError(http.StatusNoContent, "there is no product with this id.")
+		return fiber.NewError(http.StatusNoContent, constants.ERROR_CAN_NOT_FIND_PRODUCT)
 	}
 
 	/* Merge Data && Images Managements */
@@ -141,7 +142,6 @@ func (h productHandler) UpdateProduct(c *fiber.Ctx) error {
 	delImages, delURL := newProduct.FindDeleteImage(existProduct)
 	var delReq = make([]*models.DeleteFileReq, 0)
 	if len(delURL) > 0 {
-
 		for index := range delURL {
 			req := &models.DeleteFileReq{
 				Destination: delURL[index],

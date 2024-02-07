@@ -181,7 +181,8 @@ type IDbConfig interface {
 }
 
 func (d *db) Url() string {
-	return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", d.host, d.port, d.username, d.password, d.database, d.sslMode)
+	// return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", d.host, d.port, d.username, d.password, d.database, d.sslMode)
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",d.username, d.password, d.host, d.port, d.database, d.sslMode)
 }
 func (d *db) MaxConns() int {
 	return d.maxConnection

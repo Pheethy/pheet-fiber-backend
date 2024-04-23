@@ -9,4 +9,5 @@ type ImiddlewareHandler interface {
 	ParamsCheck() fiber.Handler
 	Authorize(expectedRoleId ...int) fiber.Handler
 	ApiKeyAuth() fiber.Handler
+	SetTracer() fiber.Handler
 }

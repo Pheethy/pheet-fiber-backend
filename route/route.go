@@ -20,7 +20,7 @@ func NewRoute(e fiber.Router) *Route {
 }
 
 func (r Route) RegisterUsers(handler users.IUsersHandlers, m middleware.ImiddlewareHandler) {
-	r.e.Post("/users/sign-in", handler.GetPassport)
+	r.e.Post("/v1/user/signin", handler.GetPassport)
 	r.e.Post("/users/sign-up", handler.SignUpCustomer)
 	r.e.Post("/users/sign-out", m.ApiKeyAuth(), handler.SignOut)
 	r.e.Post("/users/refresh", m.ApiKeyAuth(), handler.RefreshPassport)
@@ -36,8 +36,8 @@ func (r Route) RegisterAppInfo(handler appinfo.AppInfoHandler, m middleware.Imid
 }
 
 func (r Route) RegisterFile(handler file.IFileHandler, m middleware.ImiddlewareHandler) {
-	r.e.Post("/file/upload",m.JwtAuth(), m.Authorize(1), m.ApiKeyAuth(), handler.UploadFile)
-	r.e.Patch("/file/delete",m.JwtAuth(), m.Authorize(1), m.ApiKeyAuth(), handler.DeleteFile)
+	r.e.Post("/file/upload", m.JwtAuth(), m.Authorize(1), m.ApiKeyAuth(), handler.UploadFile)
+	r.e.Patch("/file/delete", m.JwtAuth(), m.Authorize(1), m.ApiKeyAuth(), handler.DeleteFile)
 }
 
 func (r Route) RegisterProduct(handler product.IProductHandler, m middleware.ImiddlewareHandler) {

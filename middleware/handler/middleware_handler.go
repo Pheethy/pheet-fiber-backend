@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"fmt"
 	"net/http"
 	_auth_service "pheet-fiber-backend/auth/service"
 	"pheet-fiber-backend/config"
@@ -12,6 +14,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/logger"
+	"github.com/opentracing/opentracing-go"
+	"github.com/opentracing/opentracing-go/ext"
+	"github.com/opentracing/opentracing-go/log"
 )
 
 type middlewareHandler struct {
@@ -88,23 +93,19 @@ func (m middlewareHandler) Authorize(expectedRoleId ...int) fiber.Handler {
 			return fiber.NewError(http.StatusInternalServerError, err.Error())
 		}
 
-
 		sum := 0
 		for _, val := range expectedRoleId {
 			sum += val
 		}
 
-		expectedValBinary := utils.ConvertBinary(sum , len(roles))
+		expectedValBinary := utils.ConvertBinary(sum, len(roles))
 		userValBinary := utils.ConvertBinary(userRoleId, len(roles))
-		
-
 
 		for index := range userValBinary {
 			if userValBinary[index]&expectedValBinary[index] == 1 {
 				return c.Next()
 			}
 		}
-		
 
 		return fiber.NewError(http.StatusUnauthorized)
 	}
@@ -117,5 +118,69 @@ func (m middlewareHandler) ApiKeyAuth() fiber.Handler {
 			return fiber.NewError(http.StatusInternalServerError, "API-KEY is invalid.")
 		}
 		return c.Next()
+	}
+}
+
+func (m middlewareHandler) SetTracer() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		var span opentracing.Span
+		var ctx = context.Background()
+		var spanName = fmt.Sprintf("%s %s %s", string(c.Context().Request.URI().Scheme()), c.Method(), c.Path())
+		spanCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(c.GetReqHeaders()))
+		if err != nil && err != opentracing.ErrSpanContextNotFound {
+			return fiber.NewError(http.StatusInternalServerError, err.Error())
+		}
+
+		switch err {
+		case nil:
+			/* has parent span context */
+			span = opentracing.StartSpan(spanName, ext.RPCServerOption(spanCtx))
+		case opentracing.ErrSpanContextNotFound:
+			// No parent span context found, start a new span
+			span, ctx = opentracing.StartSpanFromContext(ctx, spanName)
+		default:
+			return fiber.NewError(http.StatusInternalServerError, err.Error())
+		}
+		defer span.Finish()
+
+		c.SetUserContext(ctx)
+        // Proceed to the next handler
+        err = c.Next()
+
+		m.setTagByFiber(span, c)
+		m.setLogByFiber(span, c)
+
+		if err != nil {
+			m.setError(span, c, err)
+		} else {
+			span.SetTag("error", false)
+			span.SetTag("http.status_code", c.Response().StatusCode())
+		}
+
+		return nil
+	}
+}
+
+// Note: Fiber doesn't support parameter names directly, so this function is omitted for brevity
+
+func (m middlewareHandler) setTagByFiber(span opentracing.Span, c *fiber.Ctx) {
+	span.SetTag("host", c.Hostname())
+	span.SetTag("User-Agent", c.Get("User-Agent"))
+	span.SetTag("http.method", c.Method())
+	span.SetTag("http.url", c.OriginalURL())
+}
+
+func (m middlewareHandler) setLogByFiber(span opentracing.Span, c *fiber.Ctx) {
+	span.LogFields(
+		log.String("querystring", c.Context().QueryArgs().String()),
+	)
+}
+
+func (m middlewareHandler) setError(span opentracing.Span, c *fiber.Ctx, err error) {
+	isError := err != nil && c.Response().StatusCode() >= http.StatusBadRequest
+	span.SetTag("error", isError)
+	if isError {
+		span.SetTag("http.status_code", c.Response().StatusCode())
+		span.LogFields(log.Message(err.Error()))
 	}
 }

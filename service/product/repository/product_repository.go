@@ -201,7 +201,7 @@ func (r productRepository) FetchCategoriesByProductId(ctx context.Context, produ
 	`,
 		orm.GetSelector(models.Categories{}),
 	)
-	
+
 	stmt, err := r.db.PreparexContext(ctx, sql)
 	if err != nil {
 		return nil, fmt.Errorf("prepare failed: %v", err)

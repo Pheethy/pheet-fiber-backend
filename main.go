@@ -31,7 +31,7 @@ import (
 	_appinfo_handler "pheet-fiber-backend/service/appinfo/handler"
 	_appinfo_repo "pheet-fiber-backend/service/appinfo/repository"
 	_appinfo_usecase "pheet-fiber-backend/service/appinfo/usecase"
-	
+
 	_file_handler "pheet-fiber-backend/service/file/handler"
 	_file_usecase "pheet-fiber-backend/service/file/usecase"
 
@@ -50,8 +50,9 @@ func envPath() string {
 func main() {
 	var ctx = context.Background()
 	var cfg = config.LoadConfig(envPath())
-	var psqlDB = database.DBConnect(ctx, cfg.Db())
+	psqlDB, _ := database.DBConnect(ctx, cfg.Db())
 	defer psqlDB.Close()
+	// defer tracer.Close()
 
 	/* Init Repository */
 	midRepo := _middle_repo.NewMiddlewareRepository(psqlDB)
@@ -90,6 +91,7 @@ func main() {
 	})
 
 	/* middleware */
+	app.Use(middleware.SetTracer())
 	app.Use(middleware.Cors())
 	app.Use(middleware.Logger())
 

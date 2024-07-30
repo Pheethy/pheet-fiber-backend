@@ -1,0 +1,7 @@
+INSERT INTO "products_categories"("product_id", "category_id") VALUES
+('8e14ad55-48c1-491b-834e-6203edfc5936', 1),
+('6b5cd101-7d72-4570-bda8-17eddd9a1547', 1),
+('ba3faeee-0a2b-44e7-81d7-f399bc342948', 2),
+('f2506318-28e3-45a6-b0a0-9a1f486c2c10', 2),
+('ce990149-ed3e-4921-8c3a-33d435170f7d', 3),
+('ae36eb85-6c51-4085-8000-5797be838cca', 3);

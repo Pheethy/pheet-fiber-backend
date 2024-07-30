@@ -1,8 +1,11 @@
 package file
 
-import "pheet-fiber-backend/models"
+import (
+	"context"
+	"pheet-fiber-backend/models"
+)
 
 type IFileUsecase interface {
-	UploadToGCP(fileReq []*models.FileReq) ([]*models.FileResp, error)
+	UploadToGCP(ctx context.Context, fileReq []*models.FileReq) ([]*models.FileResp, error)
 	DeleteOnGCP(req []*models.DeleteFileReq) error
 }

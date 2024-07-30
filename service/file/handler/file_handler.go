@@ -27,11 +27,12 @@ func NewFileHandler(cfg config.Iconfig, fileUs file.IFileUsecase) file.IFileHand
 }
 
 func (f *fileHandler) UploadFile(c *fiber.Ctx) error {
-	var req = make([]*models.FileReq, 0)
+	req := make([]*models.FileReq, 0)
+	ctx := c.Context()
 
 	form, err := c.MultipartForm()
 	if err != nil {
-		return fiber.NewError(http.StatusInternalServerError, "Cast Form Failed.")
+		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 	/* ทำการรับ Files จาก Form */
 	files := form.File["files"]
@@ -40,7 +41,7 @@ func (f *fileHandler) UploadFile(c *fiber.Ctx) error {
 	for _, file := range files {
 		ext := strings.TrimPrefix(filepath.Ext(file.Filename), ".")
 		if ok := f.validateFileType(ext); !ok {
-			return fiber.NewError(http.StatusBadRequest, "file type is invalid.")
+			return fiber.NewError(http.StatusBadRequest, "file type is invalid")
 		}
 
 		if file.Size > int64(f.cfg.App().FileLimit()) {
@@ -56,13 +57,13 @@ func (f *fileHandler) UploadFile(c *fiber.Ctx) error {
 		})
 	}
 
-	newFileInfo, err := f.fileUs.UploadToGCP(req)
+	newFileInfo, err := f.fileUs.UploadToGCP(ctx, req)
 	if err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 
 	resp := map[string]interface{}{
-		"message": "uploaded.",
+		"message": "uploaded",
 		"resp":    newFileInfo,
 	}
 
@@ -70,8 +71,8 @@ func (f *fileHandler) UploadFile(c *fiber.Ctx) error {
 }
 
 func (f *fileHandler) DeleteFile(c *fiber.Ctx) error {
-	var req = make([]*models.DeleteFileReq, 0)
-	if err := c.BodyParser(&req); err != nil {
+	req := make([]*models.DeleteFileReq, 0)
+	if err := c.BodyParser(req); err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 

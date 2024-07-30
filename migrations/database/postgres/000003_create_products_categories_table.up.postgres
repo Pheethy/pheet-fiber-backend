@@ -1,0 +1,8 @@
+CREATE TABLE "products_categories" (
+  "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "product_id" uuid NOT NULL,
+  "category_id" INT NOT NULL
+);
+
+ALTER TABLE "products_categories" ADD FOREIGN KEY ("product_id") REFERENCES "products" ("id");
+ALTER TABLE "products_categories" ADD FOREIGN KEY ("category_id") REFERENCES "categories" ("id");

@@ -1,0 +1,17 @@
+-- create enum --
+CREATE TYPE order_status AS ENUM (
+    'WAITING',
+    'SHIPPING',
+    'COMPLETED',
+    'CANCELED'
+);
+CREATE TABLE "orders" (
+  "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "user_id" uuid NOT NULL,
+  "contact" VARCHAR NOT NULL,
+  "address" VARCHAR NOT NULL,
+  "status" order_status NOT NULL,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+ALTER TABLE "orders" ADD FOREIGN KEY ("user_id") REFERENCES "users" ("id");

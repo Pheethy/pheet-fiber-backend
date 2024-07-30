@@ -1,0 +1,9 @@
+CREATE TABLE transfer_slip (
+    id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    order_id UNIQUEIDENTIFIER NOT NULL UNIQUE,
+    filename NVARCHAR(255) NOT NULL,
+    url NVARCHAR(255) NOT NULL,
+    created_at DATETIME2 NOT NULL DEFAULT GETDATE()
+);
+ALTER TABLE transfer_slip 
+ADD CONSTRAINT fk_transfer_slip_order_id FOREIGN KEY (order_id) REFERENCES orders (id);

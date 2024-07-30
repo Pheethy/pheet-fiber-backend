@@ -1,0 +1,4 @@
+-- Drop foreign key constraints
+ALTER TABLE transfer_slip DROP CONSTRAINT fk_transfer_slip_order_id;
+-- Drop tables
+DROP TABLE transfer_slip;

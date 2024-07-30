@@ -1,9 +1,10 @@
 package models
 
 import (
-	"github.com/Pheethy/psql/helper"
 	"strings"
 	"time"
+
+	"github.com/Pheethy/psql/helper"
 
 	"github.com/gofrs/uuid"
 )
@@ -14,8 +15,8 @@ const (
 
 // *Entity เพื่อจะส่งข้อมูลออกไป *//
 type Products struct {
-	TableName    struct{}          `db:"products" json:"-" pk:"ID"`
-	ID           string            `json:"id" form:"id" db:"id" type:"string"`
+	TableName    struct{}          `db:"products" json:"-" pk:"Id"`
+	Id           *uuid.UUID        `json:"id" form:"id" db:"id" type:"uuid"`
 	Title        string            `json:"title" form:"title" db:"title" type:"string"`
 	Description  string            `json:"description" form:"description" db:"description" type:"string"`
 	Price        float64           `json:"price" form:"price" db:"price" type:"float64"`
@@ -25,6 +26,11 @@ type Products struct {
 
 	Categories *Categories `json:"categories" db:"-" fk:"fk_field1:ID, fk_field2:ProductId"` /* สำหรับการ Fetch Category มา Fill เพื่อดูว่า Product อยู่ Categories ไหน */
 	Images     []*Image    `json:"images" db:"-" fk:"fk_field1:ID, fk_field2:ProductId"`
+}
+
+func (p *Products) NewId() {
+	id, _ := uuid.NewV4()
+	p.Id = &id
 }
 
 func (p *Products) SetCreatedAt() {
@@ -39,8 +45,8 @@ func (p *Products) SetUpdatedAt() {
 
 func (p *Products) MergeProduct(exist *Products) {
 	switch {
-	case p.ID == "":
-		p.ID = exist.ID
+	case p.Id == nil:
+		p.Id = exist.Id
 		fallthrough
 	case p.Title == "":
 		p.Title = exist.Title
@@ -60,12 +66,12 @@ func (p *Products) MergeProduct(exist *Products) {
 }
 
 func (p *Products) FindDeleteImage(exist *Products) ([]*uuid.UUID, []string) {
-	var delIds = make([]*uuid.UUID, 0)
-	var delURL = make([]string, 0)
+	delIds := make([]*uuid.UUID, 0)
+	delURL := make([]string, 0)
 
 	// Create a map for faster lookup of existing image UUIDs
 	existImageMap := make(map[uuid.UUID]struct{})
-	if len(p.Images) >= 1 { //เป็นการเช็คว่า product ต้องมีรูปอย่างน้อย 1 รูป
+	if len(p.Images) >= 1 { // เป็นการเช็คว่า product ต้องมีรูปอย่างน้อย 1 รูป
 		for _, u := range p.Images {
 			existImageMap[*u.ID] = struct{}{}
 		}
@@ -77,7 +83,7 @@ func (p *Products) FindDeleteImage(exist *Products) ([]*uuid.UUID, []string) {
 			delIds = append(delIds, u.ID) // Add the UUID to the delete list// Prefix to remove
 			prefix := "https://storage.googleapis.com/pheethy-dev-bucket/"
 			// Use strings.TrimLeft to remove the prefix
-			result := strings.SplitAfter(u.Url, prefix)
+			result := strings.SplitAfter(u.URL, prefix)
 			delURL = append(delURL, result[1])
 		}
 	}

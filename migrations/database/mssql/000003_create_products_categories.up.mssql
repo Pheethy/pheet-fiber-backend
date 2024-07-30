@@ -1,0 +1,10 @@
+CREATE TABLE products_categories (
+    id UNIQUEIDENTIFIER NOT NULL PRIMARY KEY DEFAULT NEWID(),
+    product_id UNIQUEIDENTIFIER NOT NULL,
+    category_id INT NOT NULL
+);
+ALTER TABLE products_categories
+ADD CONSTRAINT fk_products_categories_product_id FOREIGN KEY (product_id) REFERENCES products (id);
+
+ALTER TABLE products_categories 
+ADD CONSTRAINT fk_products_categories_category_id FOREIGN KEY (category_id) REFERENCES categories (id);

@@ -1,0 +1,19 @@
+-- Create transaction --
+BEGIN;
+
+-- set time zone --
+SET TIME ZONE 'Asia/Bangkok';
+
+-- install Extension UUID --
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+COMMIT;
+
+CREATE TABLE "products" (
+  "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "title" VARCHAR NOT NULL UNIQUE,
+  "description" VARCHAR NOT NULL DEFAULT '',
+  "price" FLOAT NOT NULL DEFAULT 0,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now(),
+  "updated_at" TIMESTAMP NOT NULL DEFAULT now()
+);

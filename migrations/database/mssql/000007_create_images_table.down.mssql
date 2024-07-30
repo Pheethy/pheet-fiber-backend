@@ -1,0 +1,2 @@
+ALTER TABLE images DROP CONSTRAINT fk_images_product_id;
+DROP TABLE images;

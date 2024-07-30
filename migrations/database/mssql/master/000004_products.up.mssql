@@ -1,0 +1,7 @@
+INSERT INTO "products" ("id", "title", "description", "price", "created_at", "updated_at") VALUES
+('8e14ad55-48c1-491b-834e-6203edfc5936','Coffee', 'Just a food & beverage product', 150, '2023-03-10 00:03:59', '2023-03-10 00:03:59'),
+('6b5cd101-7d72-4570-bda8-17eddd9a1547', 'Steak', 'Just a food & beverage product', 200, '2023-03-10 00:03:59', '2023-03-10 00:03:59'),
+('ba3faeee-0a2b-44e7-81d7-f399bc342948', 'Shirt', 'Just a fashion product', 590, '2023-03-10 00:03:59', '2023-03-10 00:03:59'),
+('f2506318-28e3-45a6-b0a0-9a1f486c2c10', 'Touser', 'Just a fashion product', 1490, '2023-03-10 00:03:59', '2023-03-10 00:03:59'),
+('ce990149-ed3e-4921-8c3a-33d435170f7d', 'Phone', 'Just a gadget product', 33400, '2023-03-10 00:03:59', '2023-03-10 00:03:59'),
+('ae36eb85-6c51-4085-8000-5797be838cca', 'Computer', 'Just a gadget product', 49000, '2023-03-10 00:03:59', '2023-03-10 00:03:59');

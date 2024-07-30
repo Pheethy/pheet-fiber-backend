@@ -1,0 +1,3 @@
+ALTER TABLE products_categories DROP CONSTRAINT fk_products_categories_product_id;
+ALTER TABLE products_categories DROP CONSTRAINT fk_products_categories_category_id;
+DROP TABLE products_categories;

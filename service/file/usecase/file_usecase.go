@@ -11,9 +11,11 @@ import (
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/file"
 	"strings"
+	"sync"
 	"time"
 
 	"cloud.google.com/go/storage"
+	"github.com/opentracing/opentracing-go"
 )
 
 type fileUsecase struct {
@@ -24,47 +26,43 @@ func NewFileUsecase(cfg config.Iconfig) file.IFileUsecase {
 	return &fileUsecase{cfg: cfg}
 }
 
-func (f fileUsecase) UploadToGCP(fileReq []*models.FileReq) ([]*models.FileResp, error) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
-	defer cancel()
+func (f fileUsecase) UploadToGCP(ctx context.Context, fileReq []*models.FileReq) ([]*models.FileResp, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "UploadToGCP")
+	defer span.Finish()
 
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("Err new GCP client: %v", err)
+		return nil, fmt.Errorf("err new GCP client: %v", err)
 	}
 	defer client.Close()
 
-	/* ทำ pool worker */
-	/* สร้าง Channel Jobs */
 	jobsCh := make(chan *models.FileReq, len(fileReq))
-	/* สร้าง Channel Result */
 	resultCh := make(chan *models.FileResp, len(fileReq))
-	/* สร้าง Channel Error */
 	errCh := make(chan error, len(fileReq))
-	/* สร้าง Entity สำหรับ Response Request นี้ */
 	resp := make([]*models.FileResp, 0)
 
-	/* ทำการนำ file request ใส่ไปใน jobs channel */
 	for _, r := range fileReq {
 		jobsCh <- r
 	}
 	close(jobsCh)
 
-	/* ประกาศจำนวน worker */
-	var workers int = 5
-	/* สร้าง loop สำหรับการทำงาน upload file */
+	workers := 5
+	wg := new(sync.WaitGroup)
+	wg.Add(workers)
 	for i := 0; i < workers; i++ {
-		//working zone
-		go f.streamFileUpload(ctx, client, jobsCh, resultCh, errCh)
+		go func() {
+			defer wg.Done()
+			f.streamFileUpload(ctx, client, jobsCh, resultCh, errCh)
+		}()
 	}
+	wg.Wait()
+	close(errCh)
+	close(resultCh)
 
-	/* สร้าง loop สำหรับการ Response */
 	for a := 0; a < len(fileReq); a++ {
-		//handler err โดยการรับค่า err จาก Channel errCh
 		if err := <-errCh; err != nil {
-			return nil, fmt.Errorf("Response err: %v", err)
+			return nil, errors.New(err.Error())
 		}
-		//ทำการนำ result จาก resultCh ใส่ใน resp
 		result := <-resultCh
 		resp = append(resp, result)
 	}
@@ -107,7 +105,7 @@ func (f fileUsecase) streamFileUpload(ctx context.Context, client *storage.Clien
 			errs <- fmt.Errorf("Writer.Close: %w", err)
 			return
 		}
-		fmt.Printf("👽 %v uploaded to %v.\n", job.FileName, job.Destination)
+		fmt.Printf("🍫 %v uploaded to %v.\n", job.FileName, job.Destination)
 
 		newFile := &models.FilePub{
 			File: &models.FileResp{
@@ -135,35 +133,34 @@ func (f fileUsecase) DeleteOnGCP(req []*models.DeleteFileReq) error {
 
 	client, err := storage.NewClient(ctx)
 	if err != nil {
-		return fmt.Errorf("Err new GCP client: %v", err)
+		return fmt.Errorf("err new GCP client: %v", err)
 	}
 	defer client.Close()
 
-	/* ทำ Pool worker */
-	/* สร้าง Jobs channel */
-	var jobsCh = make(chan *models.DeleteFileReq, len(req))
-	/* สร้าง Errors Channel*/
-	var errCh = make(chan error, len(req))
+	jobsCh := make(chan *models.DeleteFileReq, len(req))
+	errCh := make(chan error, len(req))
 
-	/* ทำการนำ File delete request ใส่ใน jobs channel */
 	for _, r := range req {
 		jobsCh <- r
 	}
 	close(jobsCh)
 
-	/* ประกาศจำนวน worker */
-	var workers int = 5
-	/* สร้าง loop สำหรับการทำงานตามจำนวน worker */
+	workers := 5
+	wg := new(sync.WaitGroup)
+	wg.Add(workers)
 	for w := 0; w < workers; w++ {
-		/* working space */
-		go f.deleteFile(ctx, client, jobsCh, errCh)
+		go func() {
+			defer wg.Done()
+			f.deleteFile(ctx, client, jobsCh, errCh)
+		}()
 	}
 
-	/* สร้าง loop สำหรับการ รับค่า err จาก errs channel */
+	wg.Wait()
+	close(errCh)
+
 	for i := 0; i < len(req); i++ {
-		//handler err โดยการรับค่า err จาก Channel errCh
 		if err := <-errCh; err != nil {
-			return fmt.Errorf("Response err: %v", err)
+			return errors.New(err.Error())
 		}
 	}
 

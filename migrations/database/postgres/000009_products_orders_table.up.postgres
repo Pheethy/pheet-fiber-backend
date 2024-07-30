@@ -1,0 +1,8 @@
+CREATE TABLE "products_orders" (
+  "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "order_id" uuid NOT NULL,
+  "product_id" uuid NOT NULL,
+  "qty" INT NOT NULL DEFAULT 1
+);
+ALTER TABLE "products_orders" ADD FOREIGN KEY ("order_id") REFERENCES "orders" ("id");
+ALTER TABLE "products_orders" ADD FOREIGN KEY ("product_id") REFERENCES "products" ("id");

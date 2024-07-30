@@ -1,0 +1,90 @@
+[
+    {
+        "method": "PUT",
+        "path": "${index}",
+        "header": null,
+        "body": {
+            "settings": {
+                "index": {
+                    "max_ngram_diff": 100
+                },
+                "analysis": {
+                    "normalizer": {
+                        "my_normalizer": {
+                            "type": "custom",
+                            "char_filter": [],
+                            "filter": [
+                                "lowercase",
+                                "asciifolding"
+                            ]
+                        }
+                    },
+                    "char_filter": {
+                        "replace_minus": {
+                            "type": "pattern_replace",
+                            "pattern": "-",
+                            "replacement": ""
+                        }
+                    },
+                    "analyzer": {
+                        "my_analyzer": {
+                            "tokenizer": "my_tokenizer",
+                            "filter": [
+                                "lowercase"
+                            ]
+                        },
+                        "citizen_analyzer": {
+                            "tokenizer": "citizen_analyzer",
+                            "filter": [
+                                "lowercase"
+                            ],
+                            "char_filter": [
+                                "replace_minus"
+                            ]
+                        }
+                    },
+                    "tokenizer": {
+                        "my_tokenizer": {
+                            "type": "ngram",
+                            "min_gram": 1,
+                            "max_gram": 60
+                        },
+                        "citizen_analyzer": {
+                            "type": "edge_ngram",
+                            "min_gram": 1,
+                            "max_gram": 13
+                        }
+                    }
+                }
+            },
+            "mappings": {
+                "properties": {
+                    "id": {
+                        "type": "keyword"
+                    },
+                    "title": {
+                        "type":"text",
+                        "analyzer": "my_analyzer"
+                    },
+                    "document_type": {
+                        "type": "keyword"
+                    },
+                    "price": {
+                        "type": "float"
+                    },
+                    "author": {
+                        "type":"flattened"
+                    },
+                    "created_at": {
+                        "type": "date",
+                        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                    },
+                    "updated_at": {
+                        "type": "date",
+                        "format": "yyyy-MM-dd HH:mm:ss||yyyy-MM-dd||epoch_millis"
+                    }
+                }
+            }
+        }
+    }
+]

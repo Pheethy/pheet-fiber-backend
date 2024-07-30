@@ -1,0 +1,4 @@
+INSERT INTO "categories"("title") VALUES
+('food & beverage'),
+('fashion'),
+('gadget');

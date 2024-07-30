@@ -1,0 +1,8 @@
+CREATE TABLE "transfer_slip" (
+  "id" uuid NOT NULL UNIQUE PRIMARY KEY DEFAULT uuid_generate_v4(),
+  "order_id" uuid NOT NULL UNIQUE,
+  "filename" VARCHAR NOT NULL,
+  "url" VARCHAR NOT NULL,
+  "created_at" TIMESTAMP NOT NULL DEFAULT now()
+);
+ALTER TABLE "transfer_slip" ADD FOREIGN KEY ("order_id") REFERENCES "orders" ("id");

@@ -10,6 +10,7 @@ const (
 	ERROR_ORGANIZE_DEPARTMENT_NAME_WAS_DUPLICATE = "department_name was duplicate"
 	ERROR_KEYWORD_NAME_WAS_DUPLICATE             = "name was duplicate"
 	ERROR_CAN_NOT_FIND_PRODUCT                   = "Can't find this product"
+	ERROR_PRODUCT_NOT_FOUND                      = "product not found"
 )
 
 /* postgres */

@@ -4,20 +4,20 @@ import (
 	"context"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/order"
-	"pheet-fiber-backend/service/product"
+	"pheet-fiber-backend/service/products"
 	"sync"
 
 	"github.com/Pheethy/psql/helper"
 )
 
 type orderUsecase struct {
-	orderRepo order.IOrderRepository
-	productRepo product.IProductRepository
+	orderRepo   order.IOrderRepository
+	productRepo products.IProductsRepositoryDB
 }
 
-func NewOrderUsecase(orderRepo order.IOrderRepository, productRepo product.IProductRepository) order.IOrderUsecase {
+func NewOrderUsecase(orderRepo order.IOrderRepository, productRepo products.IProductsRepositoryDB) order.IOrderUsecase {
 	return orderUsecase{
-		orderRepo: orderRepo,
+		orderRepo:   orderRepo,
 		productRepo: productRepo,
 	}
 }
@@ -36,3 +36,4 @@ func (o orderUsecase) FetchOneOrder(ctx context.Context, orderId string) (*model
 
 	return order, nil
 }
+

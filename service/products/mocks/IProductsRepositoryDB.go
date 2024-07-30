@@ -8,7 +8,7 @@ import (
 	helper "github.com/Pheethy/psql/helper"
 	mock "github.com/stretchr/testify/mock"
 
-	models "pheet-api-flavorparser/models"
+	models "pheet-fiber-backend/models"
 
 	sync "sync"
 

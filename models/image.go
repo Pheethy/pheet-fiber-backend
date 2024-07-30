@@ -13,7 +13,7 @@ type Image struct {
 	ID        *uuid.UUID        `json:"id" db:"id" type:"uuid"`
 	FileName  string            `json:"filename" db:"filename" type:"string"`
 	URL       string            `json:"url" db:"url" type:"string"`
-	ProductId string            `json:"product_id" db:"product_id" type:"string"`
+	ProductId *uuid.UUID        `json:"product_id" db:"product_id" type:"uuid"`
 	CreatedAt *helper.Timestamp `db:"created_at" json:"created_at" type:"timestamp"`
 	UpdatedAt *helper.Timestamp `db:"updated_at" json:"updated_at" type:"timestamp"`
 }
@@ -32,4 +32,3 @@ func (i *Image) SetUpdatedAt() {
 	time := helper.NewTimestampFromTime(time.Now())
 	i.UpdatedAt = &time
 }
-

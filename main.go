@@ -20,9 +20,9 @@ import (
 	_users_repo "pheet-fiber-backend/service/users/repository"
 	_users_usecase "pheet-fiber-backend/service/users/usecase"
 
-	_product_handler "pheet-fiber-backend/service/product/handler"
-	_product_repo "pheet-fiber-backend/service/product/repository"
-	_product_usecase "pheet-fiber-backend/service/product/usecase"
+	_product_handler "pheet-fiber-backend/service/products/handlers"
+	_product_repo "pheet-fiber-backend/service/products/repository"
+	_product_usecase "pheet-fiber-backend/service/products/usecase"
 
 	_order_handler "pheet-fiber-backend/service/order/handler"
 	_order_repo "pheet-fiber-backend/service/order/repository"
@@ -48,8 +48,8 @@ func envPath() string {
 }
 
 func main() {
-	var ctx = context.Background()
-	var cfg = config.LoadConfig(envPath())
+	ctx := context.Background()
+	cfg := config.LoadConfig(envPath())
 	psqlDB, _ := database.DBConnect(ctx, cfg.Db())
 	defer psqlDB.Close()
 	// defer tracer.Close()
@@ -58,7 +58,7 @@ func main() {
 	midRepo := _middle_repo.NewMiddlewareRepository(psqlDB)
 	userRepo := _users_repo.NewUsersRepository(psqlDB)
 	infoRepo := _appinfo_repo.NewAppInfoRepository(psqlDB)
-	proRepo := _product_repo.NewProductRepository(psqlDB, cfg)
+	proRepo := _product_repo.NewProductsRepository(psqlDB)
 	orderRepo := _order_repo.NewOrderRepository(psqlDB, cfg)
 
 	/* Init Usecase */
@@ -66,7 +66,7 @@ func main() {
 	userUs := _users_usecase.NewUsersUsecase(cfg, userRepo)
 	infoUs := _appinfo_usecase.NewAppInfoUsecase(cfg, infoRepo)
 	fileUs := _file_usecase.NewFileUsecase(cfg)
-	proUs := _product_usecase.NewProductUsecase(proRepo, fileUs, cfg)
+	proUs := _product_usecase.NewProductsUsecase(proRepo, fileUs, cfg)
 	orderUs := _order_usecase.NewOrderUsecase(orderRepo, proRepo)
 
 	/* Init Handler */
@@ -75,7 +75,7 @@ func main() {
 	userHandler := _users_handler.NewUsersHandler(cfg, userUs)
 	infoHandler := _appinfo_handler.NewAppInfoHandler(cfg, infoUs)
 	fileHandler := _file_handler.NewFileHandler(cfg, fileUs)
-	proHandler := _product_handler.NewProductHandler(cfg, proUs, fileUs)
+	proHandler := _product_handler.NewProductsHandlers(proUs, fileUs)
 	orderHandler := _order_handler.NewOrderHandler(orderUs)
 
 	/* Init Validator */
@@ -109,7 +109,7 @@ func main() {
 	r.RegisterOrder(orderHandler, middleware)
 
 	// Graceful Shutdown
-	var c = make(chan os.Signal, 1)
+	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
 		_ = <-c
@@ -117,7 +117,7 @@ func main() {
 		_ = app.Shutdown()
 	}()
 
-	//Listen to host:port
+	// Listen to host:port
 	log.Printf("Server is starting on %v", cfg.App().Url())
 	app.Listen(cfg.App().Url())
 }

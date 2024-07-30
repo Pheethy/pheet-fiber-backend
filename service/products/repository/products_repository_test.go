@@ -3,7 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"pheet-api-flavorparser/models"
+	"pheet-fiber-backend/models"
 	"testing"
 	"time"
 
@@ -46,9 +46,9 @@ func Test_Fetch_One_Product(t *testing.T) {
 			UpdatedAt:    &ti,
 			CategoriesId: 1,
 			Categories:   &models.Categories{Id: 1, Title: "ตลาดมาก", ProductId: &idPro},
-			Images: []*models.Images{
+			Images: []*models.Image{
 				{
-					Id:        &idImg,
+					ID:        &idImg,
 					FileName:  "test",
 					URL:       "test",
 					ProductId: &idPro,
@@ -91,7 +91,7 @@ func Test_Fetch_One_Product(t *testing.T) {
 		})
 		for index := range products.Images {
 			imgRows.AddRow(
-				products.Images[index].Id,
+				products.Images[index].ID,
 				products.Images[index].FileName,
 				products.Images[index].URL,
 				products.Images[index].ProductId,
@@ -228,9 +228,9 @@ func TestCraeteProduct(t *testing.T) {
 				Title:     "computer",
 				ProductId: &id,
 			},
-			Images: []*models.Images{
+			Images: []*models.Image{
 				{
-					Id:        &idImg,
+					ID:        &idImg,
 					FileName:  "pheet.png",
 					URL:       "test/path",
 					ProductId: &id,
@@ -274,7 +274,7 @@ func TestCraeteProduct(t *testing.T) {
 		for index := range mockProduct.Images {
 			images.ExpectExec().WithArgs(
 				/* create */
-				mockProduct.Images[index].Id,
+				mockProduct.Images[index].ID,
 				mockProduct.Images[index].FileName,
 				mockProduct.Images[index].URL,
 				mockProduct.Images[index].ProductId,
@@ -317,9 +317,9 @@ func TestUpdateProduct(t *testing.T) {
 				Title:     "computer",
 				ProductId: &id,
 			},
-			Images: []*models.Images{
+			Images: []*models.Image{
 				{
-					Id:        &idImg,
+					ID:        &idImg,
 					FileName:  "pheet.png",
 					URL:       "test/path",
 					ProductId: &id,
@@ -360,7 +360,7 @@ func TestUpdateProduct(t *testing.T) {
 		for index := range mockProduct.Images {
 			images.ExpectExec().WithArgs(
 				/* create */
-				mockProduct.Images[index].Id,
+				mockProduct.Images[index].ID,
 				mockProduct.Images[index].FileName,
 				mockProduct.Images[index].URL,
 				mockProduct.Images[index].ProductId,
@@ -402,9 +402,9 @@ func TestDeleteProduct(t *testing.T) {
 				Title:     "computer",
 				ProductId: &id,
 			},
-			Images: []*models.Images{
+			Images: []*models.Image{
 				{
-					Id:        &idImg,
+					ID:        &idImg,
 					FileName:  "pheet.png",
 					URL:       "test/path",
 					ProductId: &id,

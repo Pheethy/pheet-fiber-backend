@@ -79,7 +79,7 @@ func (p productsUsecase) CraeteProduct(ctx context.Context, req *models.Products
 				URL:       newFileInfo[index].Url,
 				ProductId: req.Id,
 			}
-			image.NewUUID()
+			image.NewId()
 			image.SetCreatedAt()
 			image.SetUpdatedAt()
 			images = append(images, image)
@@ -125,7 +125,7 @@ func (p productsUsecase) UpdateProduct(ctx context.Context, product *models.Prod
 				URL:       newFileInfo[index].Url,
 				ProductId: product.Id,
 			}
-			image.NewUUID()
+			image.NewId()
 			image.SetCreatedAt()
 			image.SetUpdatedAt()
 			images = append(images, image)

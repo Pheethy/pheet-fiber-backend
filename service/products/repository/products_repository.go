@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"pheet-api-flavorparser/constants"
-	"pheet-api-flavorparser/models"
-	"pheet-api-flavorparser/service/products"
+	"pheet-fiber-backend/constants"
+	"pheet-fiber-backend/models"
+	"pheet-fiber-backend/service/products"
 	"strings"
 	"sync"
 
@@ -105,7 +105,7 @@ func (p productsRepository) FetchAllProducts(ctx context.Context, args *sync.Map
 	`,
 		orm.GetSelector(models.Products{}),
 		orm.GetSelector(models.Categories{}),
-		orm.GetSelector(models.Images{}),
+		orm.GetSelector(models.Image{}),
 		where,
 		paginateSQL,
 		where,
@@ -163,7 +163,7 @@ func (p productsRepository) FetchOneProduct(ctx context.Context, productId *uuid
 	`,
 		orm.GetSelector(models.Products{}),
 		orm.GetSelector(models.Categories{}),
-		orm.GetSelector(models.Images{}),
+		orm.GetSelector(models.Image{}),
 	)
 
 	stmt, err := p.psqlDB.PreparexContext(ctx, sql)
@@ -392,7 +392,7 @@ func (r productsRepository) upsertImages(ctx context.Context, tx *sqlx.Tx, produ
 	for index := range product.Images {
 		if _, err := stmt.ExecContext(ctx,
 			// create
-			product.Images[index].Id,
+			product.Images[index].ID,
 			product.Images[index].FileName,
 			product.Images[index].URL,
 			product.Id,

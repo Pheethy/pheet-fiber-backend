@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	gin "github.com/gin-gonic/gin"
+	fiber "github.com/gofiber/fiber/v2"
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -13,28 +13,93 @@ type IProductsHandlers struct {
 }
 
 // Create provides a mock function with given fields: c
-func (_m *IProductsHandlers) Create(c *gin.Context) {
-	_m.Called(c)
+func (_m *IProductsHandlers) Create(c *fiber.Ctx) error {
+	ret := _m.Called(c)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Create")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*fiber.Ctx) error); ok {
+		r0 = rf(c)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // DeleteProduct provides a mock function with given fields: c
-func (_m *IProductsHandlers) DeleteProduct(c *gin.Context) {
-	_m.Called(c)
+func (_m *IProductsHandlers) DeleteProduct(c *fiber.Ctx) error {
+	ret := _m.Called(c)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteProduct")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*fiber.Ctx) error); ok {
+		r0 = rf(c)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // FetchAllProduct provides a mock function with given fields: c
-func (_m *IProductsHandlers) FetchAllProduct(c *gin.Context) {
-	_m.Called(c)
+func (_m *IProductsHandlers) FetchAllProduct(c *fiber.Ctx) error {
+	ret := _m.Called(c)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FetchAllProduct")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*fiber.Ctx) error); ok {
+		r0 = rf(c)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // FetchOneProduct provides a mock function with given fields: c
-func (_m *IProductsHandlers) FetchOneProduct(c *gin.Context) {
-	_m.Called(c)
+func (_m *IProductsHandlers) FetchOneProduct(c *fiber.Ctx) error {
+	ret := _m.Called(c)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FetchOneProduct")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*fiber.Ctx) error); ok {
+		r0 = rf(c)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // UpdateProduct provides a mock function with given fields: c
-func (_m *IProductsHandlers) UpdateProduct(c *gin.Context) {
-	_m.Called(c)
+func (_m *IProductsHandlers) UpdateProduct(c *fiber.Ctx) error {
+	ret := _m.Called(c)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateProduct")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(*fiber.Ctx) error); ok {
+		r0 = rf(c)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
 }
 
 // NewIProductsHandlers creates a new instance of IProductsHandlers. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

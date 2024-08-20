@@ -1,0 +1,913 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>handlers: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">pheet-fiber-backend/service/products/handlers/products_handlers.go (10.5%)</option>
+				
+				<option value="file1">pheet-fiber-backend/service/products/repository/products_repository.go (46.4%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package handlers
+
+import (
+        "mime/multipart"
+        "net/http"
+        "pheet-fiber-backend/constants"
+        "pheet-fiber-backend/models"
+        "pheet-fiber-backend/service/file"
+        "pheet-fiber-backend/service/products"
+        "strconv"
+        "strings"
+        "sync"
+
+        "github.com/Pheethy/psql/helper"
+        "github.com/gofiber/fiber/v2"
+        "github.com/gofrs/uuid"
+)
+
+/* Adapter */
+type productsHandlers struct {
+        productUs products.IProductUsecase
+        fileUs    file.IFileUsecase
+}
+
+/* Constructor */
+func NewProductsHandlers(productUs products.IProductUsecase, fileUs file.IFileUsecase) products.IProductsHandlers <span class="cov8" title="1">{
+        return productsHandlers{
+                productUs: productUs,
+                fileUs:    fileUs,
+        }
+}</span>
+
+func (p productsHandlers) FetchAllProduct(c *fiber.Ctx) error <span class="cov0" title="0">{
+        ctx := c.UserContext()
+        searchWord := c.Query("search_word")
+        page, pageErr := strconv.Atoi(c.Query("page"))
+        perPage, perPageErr := strconv.Atoi(c.Query("per_page"))
+        args := new(sync.Map)
+        paginator := helper.NewPaginator()
+
+        if searchWord != "" </span><span class="cov0" title="0">{
+                args.Store("search_word", searchWord)
+        }</span>
+
+        <span class="cov0" title="0">if pageErr == nil </span><span class="cov0" title="0">{
+                paginator.Page = page
+        }</span>
+
+        <span class="cov0" title="0">if perPageErr == nil </span><span class="cov0" title="0">{
+                paginator.PerPage = perPage
+        }</span>
+
+        <span class="cov0" title="0">products, err := p.productUs.FetchAllProducts(ctx, args, &amp;paginator)
+        if err != nil </span><span class="cov0" title="0">{
+                if ok := strings.Contains(err.Error(), constants.ERROR_PRODUCT_NOT_FOUND); ok </span><span class="cov0" title="0">{
+                        return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+                                "error": constants.ERROR_PRODUCT_NOT_FOUND,
+                        })
+                }</span>
+                <span class="cov0" title="0">return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                        "error": err.Error(),
+                })</span>
+        }
+
+        <span class="cov0" title="0">resp := map[string]interface{}{
+                "products":   products,
+                "page":       paginator.Page,
+                "per_page":   paginator.PerPage,
+                "total_page": paginator.TotalPages,
+                "total_rows": paginator.TotalEntrySizes,
+        }
+
+        return c.Status(http.StatusOK).JSON(resp)</span>
+}
+
+func (p productsHandlers) FetchOneProduct(c *fiber.Ctx) error <span class="cov8" title="1">{
+        ctx := c.Context()
+        productId := uuid.FromStringOrNil(c.Params("product_id"))
+
+        product, err := p.productUs.FetchOneProduct(ctx, &amp;productId)
+        if err != nil </span><span class="cov8" title="1">{
+                if ok := strings.Contains(err.Error(), constants.ERROR_PRODUCT_NOT_FOUND); ok </span><span class="cov8" title="1">{
+                        return c.Status(fiber.StatusUnprocessableEntity).JSON(fiber.Map{
+                                "error": constants.ERROR_PRODUCT_NOT_FOUND,
+                        })
+                }</span>
+                <span class="cov8" title="1">return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+                        "error": err.Error(),
+                })</span>
+        }
+
+        <span class="cov8" title="1">resp := map[string]interface{}{
+                "product": product,
+        }
+
+        return c.Status(http.StatusOK).JSON(resp)</span>
+}
+
+func (p productsHandlers) Create(c *fiber.Ctx) error <span class="cov0" title="0">{
+        ctx := c.Context()
+        req := new(models.Products)
+
+        if err := c.BodyParser(req); err != nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+                        "error": err.Error(),
+                })
+        }</span>
+        /* ทำการรับ Files จาก Form */
+        <span class="cov0" title="0">form, err := c.MultipartForm()
+        if err != nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+                        "error": err.Error(),
+                })
+        }</span>
+        <span class="cov0" title="0">files := form.File["files"]
+        req.NewId()
+        req.SetCreatedAt()
+        req.SetUpdatedAt()
+
+        if err := p.productUs.CraeteProduct(ctx, req, files); err != nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+                        "error": err.Error(),
+                })
+        }</span>
+
+        <span class="cov0" title="0">resp := map[string]interface{}{
+                "message":    "success",
+                "product_id": req.Id,
+        }
+
+        return c.Status(http.StatusOK).JSON(resp)</span>
+}
+
+func (p productsHandlers) UpdateProduct(c *fiber.Ctx) error <span class="cov0" title="0">{
+        ctx := c.Context()
+        newProduct := new(models.Products)
+        productId := uuid.FromStringOrNil(c.Params("product_id"))
+        if err := c.BodyParser(newProduct); err != nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusUnprocessableEntity).JSON(fiber.Map{
+                        "error": err.Error(),
+                })
+        }</span>
+        /* ทำการรับ Files จาก Form */
+        <span class="cov0" title="0">form, _ := c.MultipartForm()
+        files := make([]*multipart.FileHeader, 0)
+        if form != nil </span><span class="cov0" title="0">{
+                files = form.File["files"]
+        }</span>
+
+        <span class="cov0" title="0">existProduct, err := p.productUs.FetchOneProduct(ctx, &amp;productId)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+                        "error": err.Error(),
+                })
+        }</span>
+        <span class="cov0" title="0">if existProduct == nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusNoContent).JSON(fiber.Map{
+                        "error": constants.ERROR_PRODUCT_NOT_FOUND,
+                })
+        }</span>
+
+        /* Merge Data &amp;&amp; Images Managements */
+        <span class="cov0" title="0">newProduct.MergeProduct(existProduct)
+        newProduct.SetUpdatedAt()
+        delImages, delURL := newProduct.FindDeleteImage(existProduct)
+        delReq := make([]*models.DeleteFileReq, 0)
+        if len(delURL) &gt; 0 </span><span class="cov0" title="0">{
+                for index := range delURL </span><span class="cov0" title="0">{
+                        req := &amp;models.DeleteFileReq{
+                                Destination: delURL[index],
+                        }
+                        delReq = append(delReq, req)
+                }</span>
+        }
+
+        /* Delete Images Google Cloud Platform &amp;&amp; Database */
+        <span class="cov0" title="0">if len(delReq) &gt; 0 &amp;&amp; len(delImages) &gt; 0 </span><span class="cov0" title="0">{
+                if err := p.fileUs.DeleteOnGCP(delReq); err != nil </span><span class="cov0" title="0">{
+                        return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+                                "DeleteOnGCP failed:": err.Error(),
+                        })
+                }</span>
+                <span class="cov0" title="0">if err := p.productUs.DeleteImages(ctx, delImages); err != nil </span><span class="cov0" title="0">{
+                        return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+                                "DeleteImages failed:": err.Error(),
+                        })
+                }</span>
+        }
+        <span class="cov0" title="0">if err := p.productUs.UpdateProduct(ctx, newProduct, files); err != nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+                        "Update products failed:": err.Error(),
+                })
+        }</span>
+
+        <span class="cov0" title="0">resp := map[string]interface{}{
+                "message": "successful",
+        }
+
+        return c.Status(http.StatusOK).JSON(resp)</span>
+}
+
+func (p productsHandlers) DeleteProduct(c *fiber.Ctx) error <span class="cov0" title="0">{
+        ctx := c.Context()
+        productId := uuid.FromStringOrNil(c.Params("product_id"))
+
+        product, err := p.productUs.FetchOneProduct(ctx, &amp;productId)
+        if err != nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusInternalServerError).JSON(fiber.Map{
+                        "message": err.Error(),
+                })
+        }</span>
+
+        <span class="cov0" title="0">delReq := make([]*models.DeleteFileReq, 0)
+        if len(product.Images) &gt; 0 </span><span class="cov0" title="0">{
+                for index := range product.Images </span><span class="cov0" title="0">{
+                        url := product.Images[index].URL
+                        prefix := "https://storage.googleapis.com/pheethy-dev-bucket/"
+                        result := strings.SplitAfter(url, prefix)
+                        del := &amp;models.DeleteFileReq{
+                                Destination: result[1],
+                        }
+                        delReq = append(delReq, del)
+                }</span>
+        }
+
+        <span class="cov0" title="0">if len(delReq) &gt; 0 </span><span class="cov0" title="0">{
+                if err := p.fileUs.DeleteOnGCP(delReq); err != nil </span><span class="cov0" title="0">{
+                        return c.Status(http.StatusUnprocessableEntity).JSON(fiber.Map{
+                                "message": "delete on GCP failed.",
+                        })
+                }</span>
+        }
+
+        <span class="cov0" title="0">if err := p.productUs.DeleteProduct(ctx, product); err != nil </span><span class="cov0" title="0">{
+                return c.Status(http.StatusUnprocessableEntity).JSON(fiber.Map{
+                        "message": err.Error(),
+                })
+        }</span>
+
+        <span class="cov0" title="0">resp := map[string]interface{}{
+                "message": "successful",
+        }
+
+        return c.Status(http.StatusOK).JSON(resp)</span>
+}
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package repository
+
+import (
+        "context"
+        "fmt"
+        "log"
+        "pheet-fiber-backend/constants"
+        "pheet-fiber-backend/models"
+        "pheet-fiber-backend/service/products"
+        "strings"
+        "sync"
+
+        "github.com/Pheethy/psql/helper"
+        "github.com/Pheethy/psql/orm"
+        "github.com/Pheethy/sqlx"
+        "github.com/gofrs/uuid"
+)
+
+/* Adapter */
+type productsRepository struct {
+        psqlDB *sqlx.DB
+}
+
+/* Constructor */
+func NewProductsRepository(psqlDB *sqlx.DB) products.IProductsRepositoryDB <span class="cov8" title="1">{
+        return productsRepository{
+                psqlDB: psqlDB,
+        }
+}</span>
+
+func (p productsRepository) whereCond(ctx context.Context, args *sync.Map) ([]string, []interface{}) <span class="cov0" title="0">{
+        conds := []string{}
+        var valArgs []interface{}
+
+        if v, ok := args.Load("search_word"); ok </span><span class="cov0" title="0">{
+                if v != nil </span><span class="cov0" title="0">{
+                        cond := "LOWER(products.title) LIKE CONCAT('%%',?::text,'%%')"
+                        conds = append(conds, cond)
+                        searchWord := strings.ToLower(v.(string))
+                        searchWord = strings.ReplaceAll(searchWord, " ", "")
+                        valArgs = append(valArgs, searchWord)
+                        valArgs = append(valArgs, searchWord)
+                }</span>
+        }
+
+        <span class="cov0" title="0">return conds, valArgs</span>
+}
+
+func (p productsRepository) FetchAllProducts(ctx context.Context, args *sync.Map, paginator *helper.Paginator) ([]*models.Products, error) <span class="cov0" title="0">{
+        conds, valArgs := p.whereCond(ctx, args)
+        var where string
+        var paginateSQL string
+        if len(conds) &gt; 0 </span><span class="cov0" title="0">{
+                where += "WHERE " + strings.Join(conds, " AND ")
+        }</span>
+        <span class="cov0" title="0">if paginator != nil </span><span class="cov0" title="0">{
+                limit := int(paginator.PerPage)
+                skipItem := (int(paginator.Page) - 1) * int(paginator.PerPage)
+                paginateSQL = fmt.Sprintf(`
+                        LIMIT %d
+                        OFFSET %d
+                        `,
+                        limit,
+                        skipItem,
+                )
+        }</span>
+
+        <span class="cov0" title="0">sql := fmt.Sprintf(`
+                SELECT
+                        %s,
+                        %s,
+                        %s,
+                        products.total_row
+                FROM
+                        (
+                                SELECT
+                                        *,
+                                        COUNT(*) OVER() as "total_row"
+                                FROM
+                                        products
+                                %s
+                                %s
+                        ) as products
+                JOIN
+                        (
+                                SELECT
+                                        categories.*,
+                                        products_categories.product_id "product_id"
+                                FROM
+                                        categories
+                                JOIN
+                                        products_categories
+                                ON
+                                        products_categories.category_id = categories.id
+                        ) AS categories
+                ON
+                        products.id = categories.product_id
+                JOIN
+                        images
+                ON
+                        products.id = images.product_id
+                %s
+                ORDER BY
+                        products.created_at ASC
+        `,
+                orm.GetSelector(models.Products{}),
+                orm.GetSelector(models.Categories{}),
+                orm.GetSelector(models.Image{}),
+                where,
+                paginateSQL,
+                where,
+        )
+
+        sql = sqlx.Rebind(sqlx.DOLLAR, sql)
+        stmt, err := p.psqlDB.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">defer stmt.Close()
+
+        rows, err := stmt.QueryxContext(ctx, valArgs...)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov0" title="0">defer rows.Close()
+
+        products, err := p.orms(ctx, rows, paginator)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">return products, nil</span>
+}
+
+func (p productsRepository) FetchOneProduct(ctx context.Context, productId *uuid.UUID) (*models.Products, error) <span class="cov8" title="1">{
+        sql := fmt.Sprintf(`
+                SELECT
+                        %s,
+                        %s,
+                        %s
+                FROM
+                        products
+                JOIN
+                        (
+                                SELECT
+                                        categories.*,
+                                        products_categories.product_id "product_id"
+                                FROM
+                                        categories
+                                JOIN
+                                        products_categories
+                                ON
+                                        categories.id = products_categories.category_id
+                        ) AS categories
+                ON
+                        products.id = categories.product_id
+                JOIN
+                        images
+                ON
+                        products.id = images.product_id
+                WHERE
+                        products.id = $1
+        `,
+                orm.GetSelector(models.Products{}),
+                orm.GetSelector(models.Categories{}),
+                orm.GetSelector(models.Image{}),
+        )
+
+        stmt, err := p.psqlDB.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        rows, err := stmt.QueryxContext(ctx, productId)
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">product, err := p.orm(ctx, rows)
+        if err != nil </span><span class="cov8" title="1">{
+                return nil, err
+        }</span>
+
+        <span class="cov8" title="1">return product, nil</span>
+}
+
+func (p productsRepository) CraeteProduct(ctx context.Context, req *models.Products) error <span class="cov8" title="1">{
+        tx, err := p.psqlDB.Beginx()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("begin failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">if err := p.upsertProduct(ctx, tx, req); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("create product failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">if err := p.createProductsCategories(ctx, tx, req); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("create products_categories failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">if err := p.upsertImages(ctx, tx, req); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("create images failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">return tx.Commit()</span>
+}
+
+func (p productsRepository) UpdateProduct(ctx context.Context, req *models.Products) error <span class="cov8" title="1">{
+        tx, err := p.psqlDB.Beginx()
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("begin failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">if err := p.updateProducts(ctx, tx, req); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("update product failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">if err := p.updateProductsCategories(ctx, tx, req); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("update products_categories failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">if err := p.upsertImages(ctx, tx, req); err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("create images failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">return tx.Commit()</span>
+}
+
+func (p productsRepository) upsertProduct(ctx context.Context, tx *sqlx.Tx, product *models.Products) error <span class="cov8" title="1">{
+        sql := `
+                INSERT INTO products (id, title, description, price, created_at, updated_at)
+                VALUES(
+                        $1::uuid,
+                        $2::text,
+                        $3::text,
+                        $4::float,
+                        $5::timestamp,
+                        $6::timestamp
+                )
+                ON CONFLICT (id)
+                DO UPDATE SET
+                        title=$7::text,
+                        description=$8::text,
+                        price=$9::float,
+                        updated_at=$10::timestamp
+        `
+        stmt, err := p.psqlDB.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        if _, err := stmt.ExecContext(ctx,
+                /* create */
+                product.Id,
+                product.Title,
+                product.Description,
+                product.Price,
+                product.CreatedAt,
+                product.UpdatedAt,
+                /* update */
+                product.Title,
+                product.Description,
+                product.Price,
+                product.UpdatedAt,
+        ); err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return fmt.Errorf("exec failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (r productsRepository) createProductsCategories(ctx context.Context, tx *sqlx.Tx, product *models.Products) error <span class="cov8" title="1">{
+        sql := `
+                INSERT INTO products_categories (
+                        product_id,
+                        category_id
+                )
+                VALUES (
+                        $1::uuid,
+                        $2::integer
+                )
+        `
+
+        stmt, err := tx.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("prepare failed: %v", err)
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        if _, err := stmt.ExecContext(ctx,
+                product.Id,
+                product.CategoriesId,
+        ); err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return fmt.Errorf("exec failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (r productsRepository) updateProductsCategories(ctx context.Context, tx *sqlx.Tx, product *models.Products) error <span class="cov8" title="1">{
+        sql := `
+                UPDATE
+                        products_categories
+                SET
+                        category_id=$1::int
+                WHERE
+                        product_id=$2::uuid
+        `
+
+        stmt, err := tx.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("prepare failed: %v", err)
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        if _, err := stmt.ExecContext(ctx,
+                product.CategoriesId,
+                product.Id,
+        ); err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return fmt.Errorf("exec failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (p productsRepository) updateProducts(ctx context.Context, tx *sqlx.Tx, product *models.Products) error <span class="cov8" title="1">{
+        sql := `
+                UPDATE
+                        products
+                SET
+                        title=$1::text,
+                        description=$2::text,
+                        price=$3::float,
+                        updated_at=$4::timestamp
+                WHERE
+                        id=$5::uuid
+        `
+        stmt, err := tx.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        if _, err := stmt.ExecContext(ctx,
+                product.Title,
+                product.Description,
+                product.Price,
+                product.UpdatedAt,
+                product.Id,
+        ); err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (r productsRepository) upsertImages(ctx context.Context, tx *sqlx.Tx, product *models.Products) error <span class="cov8" title="1">{
+        sql := `
+                INSERT INTO images (
+                id,
+                filename,
+                url,
+                product_id,
+                created_at,
+                updated_at
+                ) VALUES (
+                $1::uuid,
+                $2::text,
+                $3::text,
+                $4::uuid,
+                $5::timestamp,
+                $6::timestamp
+                )
+                ON CONFLICT (id)
+                DO UPDATE SET
+                filename=$7::text,
+                url=$8::text,
+                product_id=$9::uuid,
+                updated_at=$10::timestamp
+        `
+        stmt, err := tx.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("prepare failed: %v", err)
+        }</span>
+
+        <span class="cov8" title="1">for index := range product.Images </span><span class="cov8" title="1">{
+                if _, err := stmt.ExecContext(ctx,
+                        // create
+                        product.Images[index].ID,
+                        product.Images[index].FileName,
+                        product.Images[index].URL,
+                        product.Id,
+                        product.Images[index].CreatedAt,
+                        product.Images[index].UpdatedAt,
+                        // update
+                        product.Images[index].FileName,
+                        product.Images[index].URL,
+                        product.Id,
+                        product.Images[index].UpdatedAt,
+                ); err != nil </span><span class="cov0" title="0">{
+                        log.Printf("exec failed: %v\n", err)
+                        tx.Rollback()
+                        return fmt.Errorf("exec failed: %v", err)
+                }</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (p productsRepository) DeleteProduct(ctx context.Context, product *models.Products) error <span class="cov8" title="1">{
+        tx, err := p.psqlDB.Beginx()
+        if err != nil </span><span class="cov0" title="0">{
+                return nil
+        }</span>
+
+        <span class="cov8" title="1">if err := p.deleteProductsCategories(ctx, tx, product.Id); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">if err := p.deleteImages(ctx, tx, product.Id); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">if err := p.deleteProduct(ctx, tx, product.Id); err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return tx.Commit()</span>
+}
+
+func (p productsRepository) deleteProduct(ctx context.Context, tx *sqlx.Tx, productId *uuid.UUID) error <span class="cov8" title="1">{
+        sql := `
+                DELETE
+                FROM
+                        products
+                WHERE
+                        products.id = $1::uuid;
+        `
+        stmt, err := tx.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("prepare failed: %v", err)
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        if _, err := stmt.ExecContext(ctx, productId); err != nil </span><span class="cov0" title="0">{
+                return tx.Rollback()
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (p productsRepository) deleteImages(ctx context.Context, tx *sqlx.Tx, productId *uuid.UUID) error <span class="cov8" title="1">{
+        sql := `
+                DELETE
+                FROM
+                        images
+                WHERE
+                        product_id=$1::uuid;
+        `
+        stmt, err := tx.PrepareContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        if _, err := stmt.ExecContext(ctx, productId); err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (p productsRepository) deleteProductsCategories(ctx context.Context, tx *sqlx.Tx, productId *uuid.UUID) error <span class="cov8" title="1">{
+        sql := `
+                DELETE
+                FROM
+                        products_categories
+                WHERE
+                        product_id=$1::uuid;
+        `
+        stmt, err := tx.PrepareContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov8" title="1">defer stmt.Close()
+
+        if _, err := stmt.ExecContext(ctx, productId); err != nil </span><span class="cov0" title="0">{
+                tx.Rollback()
+                return err
+        }</span>
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+func (p productsRepository) DeleteImages(ctx context.Context, ids []*uuid.UUID) error <span class="cov0" title="0">{
+        tx, err := p.psqlDB.Beginx()
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">sql := `
+                DELETE FROM images
+                WHERE id=$1::uuid;
+        `
+        stmt, err := tx.PreparexContext(ctx, sql)
+        if err != nil </span><span class="cov0" title="0">{
+                return err
+        }</span>
+        <span class="cov0" title="0">defer stmt.Close()
+
+        if len(ids) &gt; 0 </span><span class="cov0" title="0">{
+                for _, id := range ids </span><span class="cov0" title="0">{
+                        if _, err := stmt.ExecContext(ctx,
+                                id,
+                        ); err != nil </span><span class="cov0" title="0">{
+                                tx.Rollback()
+                                return err
+                        }</span>
+                }
+        }
+
+        <span class="cov0" title="0">return tx.Commit()</span>
+}
+
+func (p productsRepository) orms(ctx context.Context, rows *sqlx.Rows, paginator *helper.Paginator) ([]*models.Products, error) <span class="cov0" title="0">{
+        mapper, err := orm.OrmContext(ctx, new(models.Products), rows, orm.NewMapperOption())
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+
+        <span class="cov0" title="0">products := mapper.GetData().([]*models.Products)
+        if paginator != nil </span><span class="cov0" title="0">{
+                paginator.SetPaginatorByAllRows(mapper.GetPaginateTotal())
+        }</span>
+
+        <span class="cov0" title="0">if len(products) == 0 </span><span class="cov0" title="0">{
+                return nil, fmt.Errorf(constants.ERROR_PRODUCT_NOT_FOUND)
+        }</span>
+
+        <span class="cov0" title="0">return products, nil</span>
+}
+
+func (p productsRepository) orm(ctx context.Context, rows *sqlx.Rows) (*models.Products, error) <span class="cov8" title="1">{
+        mapper, err := orm.OrmContext(ctx, new(models.Products), rows, orm.NewMapperOption())
+        if err != nil </span><span class="cov0" title="0">{
+                return nil, err
+        }</span>
+        <span class="cov8" title="1">products := mapper.GetData().([]*models.Products)
+
+        if len(products) == 0 </span><span class="cov8" title="1">{
+                return nil, fmt.Errorf(constants.ERROR_PRODUCT_NOT_FOUND)
+        }</span>
+
+        <span class="cov8" title="1">return products[0], nil</span>
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

@@ -16,12 +16,13 @@ type IAuth interface {
 	SignToken() string
 }
 
-type IAuthAPIKey interface {
-	SignToken() string
+type authAPIKey struct {
+	mapClaims *mapClaims /* payload jwt */
+	cfg       config.IJwtConfig
 }
 
-type authAPIKey struct {
-	mapClaims *mapClaims
+type authAdminKey struct {
+	mapClaims *mapClaims /* payload jwt */
 	cfg       config.IJwtConfig
 }
 
@@ -60,6 +61,12 @@ func (a *adpAuth) SignToken() string {
 func (a *authAPIKey) SignToken() string {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, a.mapClaims)
 	ss, _ := token.SignedString(a.cfg.ApiKey())
+	return ss
+}
+
+func (a *authAdminKey) SignToken() string {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, a.mapClaims)
+	ss, _ := token.SignedString(a.cfg.AdminKey())
 	return ss
 }
 
@@ -186,7 +193,7 @@ func newRefreshToken(cfg config.IJwtConfig, claims *models.UserClaims) IAuth {
 }
 
 func newAdminToken(cfg config.IJwtConfig) IAuth {
-	return &adpAuth{
+	return &authAdminKey{
 		mapClaims: &mapClaims{
 			Claims: nil,
 			RegisteredClaims: jwt.RegisteredClaims{
@@ -203,7 +210,7 @@ func newAdminToken(cfg config.IJwtConfig) IAuth {
 }
 
 func newAPIKeyToken(cfg config.IJwtConfig) IAuth {
-	return &adpAuth{
+	return &authAPIKey{
 		mapClaims: &mapClaims{
 			Claims: nil,
 			RegisteredClaims: jwt.RegisteredClaims{
@@ -226,4 +233,3 @@ func jwtTimeDurationCal(sec int) *jwt.NumericDate {
 func jwtTimeRepeatAdapter(sec int) *jwt.NumericDate {
 	return jwt.NewNumericDate(time.Unix(int64(sec), 0))
 }
-

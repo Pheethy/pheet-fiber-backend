@@ -85,7 +85,7 @@ func (m middlewareHandler) ParamsCheck() fiber.Handler {
 func (m middlewareHandler) Authorize(expectedRoleId ...int) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		ctx := context.Background()
-		userRoleId, ok := c.Locals("role_id").(int)
+		userRoleId, ok := c.Locals("role_id").(int64)
 		if !ok {
 			return fiber.NewError(http.StatusUnprocessableEntity, "cast role_id to int failed.")
 		}
@@ -101,7 +101,7 @@ func (m middlewareHandler) Authorize(expectedRoleId ...int) fiber.Handler {
 		}
 
 		expectedValBinary := utils.ConvertBinary(sum, len(roles))
-		userValBinary := utils.ConvertBinary(userRoleId, len(roles))
+		userValBinary := utils.ConvertBinary(int(userRoleId), len(roles))
 
 		for index := range userValBinary {
 			if userValBinary[index]&expectedValBinary[index] == 1 {

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
+	"pheet-fiber-backend/polymor"
 	"pheet-fiber-backend/service/file"
 	"pheet-fiber-backend/service/products"
 	"strconv"
@@ -97,7 +98,7 @@ func (p productsHandlers) FetchOneProduct(c *fiber.Ctx) error {
 }
 
 func (p productsHandlers) Create(c *fiber.Ctx) error {
-	ctx := c.Context()
+	ctx := c.UserContext()
 	req := new(models.Products)
 
 	if err := c.BodyParser(req); err != nil {
@@ -113,9 +114,7 @@ func (p productsHandlers) Create(c *fiber.Ctx) error {
 		})
 	}
 	files := form.File["files"]
-	req.NewId()
-	req.SetCreatedAt()
-	req.SetUpdatedAt()
+	polymor.SetDefult(req)
 
 	if err := p.productUs.CraeteProduct(ctx, req, files); err != nil {
 		return c.Status(http.StatusInternalServerError).JSON(fiber.Map{

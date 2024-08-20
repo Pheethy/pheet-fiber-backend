@@ -31,7 +31,7 @@ func NewProductsHandlers(productUs products.IProductUsecase, fileUs file.IFileUs
 }
 
 func (p productsHandlers) FetchAllProduct(c *fiber.Ctx) error {
-	ctx := c.Context()
+	ctx := c.UserContext()
 	searchWord := c.Query("search_word")
 	page, pageErr := strconv.Atoi(c.Query("page"))
 	perPage, perPageErr := strconv.Atoi(c.Query("per_page"))

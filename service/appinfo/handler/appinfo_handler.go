@@ -2,7 +2,7 @@ package handler
 
 import (
 	"net/http"
-	"pheet-fiber-backend/auth/service"
+	"pheet-fiber-backend/auth"
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
@@ -14,24 +14,19 @@ import (
 )
 
 type appInfoHandler struct {
-	cfg    config.Iconfig
-	infoUs appinfo.AppInfoUsecase
+	cfg       config.Iconfig
+	addInfoUs appinfo.AppInfoUsecase
 }
 
-func NewAppInfoHandler(cfg config.Iconfig, infoUs appinfo.AppInfoUsecase) appinfo.AppInfoHandler {
+func NewAppInfoHandler(cfg config.Iconfig, addInfoUs appinfo.AppInfoUsecase) appinfo.AppInfoHandler {
 	return &appInfoHandler{
-		cfg:    cfg,
-		infoUs: infoUs,
+		cfg:       cfg,
+		addInfoUs: addInfoUs,
 	}
 }
 
-func (h appInfoHandler) GenerateAPIKey(c *fiber.Ctx) error {
-	apiKey, err := service.NewAuthService(
-		constants.APIKey,
-		h.cfg.Jwt(),
-		nil,
-	)
-
+func (a appInfoHandler) GenerateAPIKey(c *fiber.Ctx) error {
+	apiKey, err := auth.NewAuth(constants.ApiKey, a.cfg.Jwt(), nil)
 	if err != nil {
 		return fiber.NewError(http.StatusUnprocessableEntity, err.Error())
 	}
@@ -44,15 +39,15 @@ func (h appInfoHandler) GenerateAPIKey(c *fiber.Ctx) error {
 }
 
 func (h appInfoHandler) FindCategory(c *fiber.Ctx) error {
-	var ctx = c.Context()
-	var args = new(sync.Map)
-	var search = c.Query("search_word")
+	ctx := c.Context()
+	args := new(sync.Map)
+	search := c.Query("search_word")
 
 	if search != "" {
 		args.Store("search_word", search)
 	}
 
-	cats, err := h.infoUs.FindCategory(ctx, args)
+	cats, err := h.addInfoUs.FindCategory(ctx, args)
 	if err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
@@ -65,13 +60,13 @@ func (h appInfoHandler) FindCategory(c *fiber.Ctx) error {
 }
 
 func (h appInfoHandler) AddCategory(c *fiber.Ctx) error {
-	var ctx = c.Context()
-	var cats = make([]*models.Categories, 0)
+	ctx := c.Context()
+	cats := make([]*models.Categories, 0)
 	if err := c.BodyParser(&cats); err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 
-	if err := h.infoUs.InsertCategories(ctx, cats); err != nil {
+	if err := h.addInfoUs.InsertCategories(ctx, cats); err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 
@@ -82,14 +77,14 @@ func (h appInfoHandler) AddCategory(c *fiber.Ctx) error {
 }
 
 func (h appInfoHandler) RemoveCategory(c *fiber.Ctx) error {
-	var ctx = c.Context()
-	var id = c.Params("category_id")
+	ctx := c.Context()
+	id := c.Params("category_id")
 	intId, err := strconv.Atoi(id)
 	if err != nil {
 		return fiber.NewError(http.StatusUnprocessableEntity, "can't convert string to int")
 	}
 
-	if err := h.infoUs.DeleteCategory(ctx, intId); err != nil {
+	if err := h.addInfoUs.DeleteCategory(ctx, intId); err != nil {
 		return fiber.NewError(http.StatusInternalServerError, err.Error())
 	}
 

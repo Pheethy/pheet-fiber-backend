@@ -50,9 +50,9 @@ func envPath() string {
 func main() {
 	ctx := context.Background()
 	cfg := config.LoadConfig(envPath())
-	psqlDB, _ := database.DBConnect(ctx, cfg.Db())
+	psqlDB, tracer := database.DBConnect(ctx, cfg.Db())
 	defer psqlDB.Close()
-	// defer tracer.Close()
+	defer tracer.Close()
 
 	/* Init Repository */
 	midRepo := _middle_repo.NewMiddlewareRepository(psqlDB)
@@ -72,7 +72,7 @@ func main() {
 	/* Init Handler */
 	middleware := _middle_handler.NewMiddlewareHandler(cfg, midUs)
 	monHandler := _monitor_handler.NewMonitorHandler(cfg)
-	userHandler := _users_handler.NewUsersHandler(cfg, userUs)
+	userHandler := _users_handler.NewUsersHandlers(cfg, userUs)
 	infoHandler := _appinfo_handler.NewAppInfoHandler(cfg, infoUs)
 	fileHandler := _file_handler.NewFileHandler(cfg, fileUs)
 	proHandler := _product_handler.NewProductsHandlers(proUs, fileUs)
@@ -98,7 +98,7 @@ func main() {
 	/* HealthCheck Service */
 	app.Get("/", monHandler.HealthCheck)
 
-	router := app.Group("")
+	router := app.Group("/v1")
 	r := route.NewRoute(router)
 
 	/* Init Routing */

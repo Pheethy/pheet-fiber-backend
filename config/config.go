@@ -137,24 +137,31 @@ type IAppConfig interface {
 func (a *app) Url() string {
 	return fmt.Sprintf("%s:%d", a.host, a.port)
 }
+
 func (a *app) Name() string {
 	return a.name
 }
+
 func (a *app) Version() string {
 	return a.version
 }
+
 func (a *app) ReadTimeOut() time.Duration {
 	return a.readTimeOut
 }
+
 func (a *app) WriteTimeOut() time.Duration {
 	return a.writeTimeOut
 }
+
 func (a *app) BodyLimit() int {
 	return a.bodyLimit
 }
+
 func (a *app) FileLimit() int {
 	return a.fileLimit
 }
+
 func (a *app) GCPBucket() string {
 	return a.gcpBucket
 }
@@ -166,8 +173,8 @@ type app struct {
 	version      string
 	readTimeOut  time.Duration
 	writeTimeOut time.Duration
-	bodyLimit    int //bytes
-	fileLimit    int //bytes
+	bodyLimit    int // bytes
+	fileLimit    int // bytes
 	gcpBucket    string
 }
 
@@ -181,9 +188,9 @@ type IDbConfig interface {
 }
 
 func (d *db) Url() string {
-	// return fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=%s", d.host, d.port, d.username, d.password, d.database, d.sslMode)
-	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",d.username, d.password, d.host, d.port, d.database, d.sslMode)
+	return fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s", d.username, d.password, d.host, d.port, d.database, d.sslMode)
 }
+
 func (d *db) MaxConns() int {
 	return d.maxConnection
 }
@@ -214,15 +221,19 @@ type IJwtConfig interface {
 func (j *jwt) AdminKey() []byte {
 	return []byte(j.adminKey)
 }
+
 func (j *jwt) SecretKey() []byte {
 	return []byte(j.secretKey)
 }
+
 func (j *jwt) ApiKey() []byte {
 	return []byte(j.apiKey)
 }
+
 func (j *jwt) AccessExpiresAt() int {
 	return j.accessExpiresAt
 }
+
 func (j *jwt) RefreshExpiresAt() int {
 	return j.refreshExpiresAt
 }
@@ -231,6 +242,6 @@ type jwt struct {
 	adminKey         string
 	secretKey        string
 	apiKey           string
-	accessExpiresAt  int //seconds
-	refreshExpiresAt int //seconds
+	accessExpiresAt  int // seconds
+	refreshExpiresAt int // seconds
 }

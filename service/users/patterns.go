@@ -7,3 +7,4 @@ type IUsersPattern interface {
 	Admin() (IUsersPattern, error)
 	Result() (*models.UserPassport, error)
 }
+

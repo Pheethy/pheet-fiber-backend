@@ -2,11 +2,14 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
 	"pheet-fiber-backend/service/users"
-	"pheet-fiber-backend/service/users/pattern"
+	"pheet-fiber-backend/service/users/patterns"
 
+	"github.com/Pheethy/psql/orm"
 	"github.com/Pheethy/sqlx"
 	"github.com/gofrs/uuid"
 )
@@ -16,174 +19,225 @@ type usersRepository struct {
 }
 
 func NewUsersRepository(psqlDB *sqlx.DB) users.IUsersRepository {
-	return &usersRepository{
+	return usersRepository{
 		psqlDB: psqlDB,
 	}
 }
 
-func (u usersRepository) InsertUser(userReq *models.UserRegisterReq, isAdmin bool) (*models.UserPassport, error) {
-	iUserPattern := pattern.InsertUser(u.psqlDB, userReq, isAdmin)
-
+func (u usersRepository) InsertUser(ctx context.Context, userReq *models.User, isAdmin bool) (*models.UserPassport, error) {
+	pattern := patterns.NewUsersPatterns(ctx, userReq, u.psqlDB)
+	/* Get Insert User*/
 	var err error
+	/* Checking Admin */
 	if isAdmin {
-		iUserPattern, err = iUserPattern.Admin()
+		pattern, err = pattern.Admin()
 		if err != nil {
-			return nil, fmt.Errorf("insert admin failed: %v", err)
+			return nil, err
 		}
-
 	} else {
-		iUserPattern, err = iUserPattern.Customer()
+		pattern, err = pattern.Customer()
 		if err != nil {
-			return nil, fmt.Errorf("insert customer failed: %v", err)
+			return nil, err
 		}
 	}
-
-	user, err := iUserPattern.Result()
+	/* Get User Passport */
+	userPass, err := pattern.Result()
 	if err != nil {
-		return nil, fmt.Errorf("insert user failed: %v", err)
-	}
-
-	return user, err
-}
-
-func (u usersRepository) FindOneUserByEmail(ctx context.Context, email string) (*models.UserCredentialCheck, error) {
-	sql := `
-		SELECT
-			id,
-			username,
-			password,
-			email,
-			role_id
-		FROM 
-			"users"
-		WHERE
-			"email" = $1
-	`
-
-	var uCredential = new(models.UserCredentialCheck)
-	if err := u.psqlDB.GetContext(ctx, uCredential, sql, email); err != nil {
 		return nil, err
 	}
 
-	return uCredential, nil
+	return userPass, nil
 }
 
-func (u usersRepository) FetchUserProfile(ctx context.Context, id string) (*models.Users, error) {
+func (u usersRepository) UpsertOAuth(ctx context.Context, req *models.OAuth) error {
 	sql := `
-		SELECT
-			id,
-			username,
-			email,
-			role_id
-		FROM 
-			"users"
-		WHERE
-			"id" = $1
-	`
-
-	var uCredential = new(models.Users)
-	if err := u.psqlDB.GetContext(ctx, uCredential, sql, id); err != nil {
-		return nil, err
-	}
-
-	return uCredential, nil
-}
-
-func (u usersRepository) InsertOauth(ctx context.Context, req *models.UserPassport) error {
-	sql := `
-		INSERT INTO "oauth" (
-			"user_id",
-			"access_token",
-			"refresh_token"
-		)
+		INSERT INTO oauth (id, user_id, access_token, refresh_token, created_at, updated_at)
 		VALUES (
-			$1,
-			$2,
-			$3
+			$1::uuid,
+			$2::uuid,
+			$3::text,
+			$4::text,
+	    $5::timestamp,
+			$6::timestamp
 		)
-		RETURNING "id";
+		ON CONFLICT (id)
+		DO UPDATE SET
+			refresh_token=$7::text
 	`
-	if err := u.psqlDB.QueryRowContext(
-		ctx,
-		sql,
-		req.User.Id,
-		req.Token.AccessToken,
-		req.Token.RefreshToken,
-	).Scan(&req.Token.Id); err != nil {
-		return fmt.Errorf("insert oauth failed: %v", err)
-	}
-
-	return nil
-}
-
-func (u usersRepository) FetchOneOauth(ctx context.Context, reToken string) (*models.Oauth, error) {
-	sql := `
-		SELECT 
-			id,
-			user_id
-		FROM 
-			"oauth"
-		WHERE
-			"refresh_token" = $1;
-	`
-	var oauth = new(models.Oauth)
-	if err := u.psqlDB.GetContext(ctx, oauth, sql, reToken); err != nil {
-		return nil, fmt.Errorf("fetch oauth failed: %v", err)
-	}
-
-	return oauth, nil
-}
-
-func (u usersRepository) UpdateOauth(ctx context.Context, req *models.UserToken) error {
-	tx, err := u.psqlDB.Beginx()
-	if err != nil {
-		panic(err)
-	}
-
-	var id uuid.UUID
-	if req != nil {
-		id = uuid.FromStringOrNil(req.Id)
-	}
-
-	sql := `
-		UPDATE 
-			oauth 
-		SET
-			access_token=$1::text,
-			refresh_token=$2::text
-		WHERE
-			id=$3::uuid
-		
-	`
-	stmt, err := tx.PreparexContext(ctx, sql)
+	stmt, err := u.psqlDB.PreparexContext(ctx, sql)
 	if err != nil {
 		return err
 	}
 	defer stmt.Close()
 
 	if _, err := stmt.ExecContext(ctx,
+		/* Create */
+		req.Id,
+		req.UserId,
 		req.AccessToken,
 		req.RefreshToken,
-		id,
+		req.CreatedAt,
+		req.UpdatedAt,
+		/* update */
+		req.RefreshToken,
 	); err != nil {
-		tx.Rollback()
 		return err
 	}
 
-	return tx.Commit()
+	return nil
 }
 
-func (u usersRepository) DeleteOauth(ctx context.Context, oId string) error {
+func (u usersRepository) FetchOneUserByEmail(ctx context.Context, email string) (*models.User, error) {
 	sql := `
-		DELETE FROM
-			"oauth"
+		SELECT
+			users.id,
+			users.username,
+			users.password,
+			users.role_id,
+			users.email,
+			users.created_at,
+			users.updated_at
+		FROM
+			users
 		WHERE
-			"id" = $1;
+			LOWER(users.email) = LOWER($1::text)
 	`
 
-	if _, err := u.psqlDB.ExecContext(ctx, sql, oId); err != nil {
-		return fmt.Errorf("oauth not found")
+	stmt, err := u.psqlDB.PreparexContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryxContext(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	user, err := u.ormOneUser(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u usersRepository) FetchOneUserById(ctx context.Context, userId *uuid.UUID) (*models.User, error) {
+	sql := fmt.Sprintf(`
+		SELECT
+			%s
+		FROM
+			(
+				SELECT
+					users.*,
+					roles.title "role_title"
+				FROM
+					users
+				JOIN
+					roles
+				ON
+					users.role_id = roles.id
+			) AS users
+		WHERE
+			users.id=$1::uuid
+	`,
+		orm.GetSelector(models.User{}),
+	)
+
+	stmt, err := u.psqlDB.PreparexContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryxContext(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	user, err := u.ormOneUser(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+func (u usersRepository) FetchOAuthByRefreshToken(ctx context.Context, refreshToken string) (*models.OAuth, error) {
+	sql := fmt.Sprintf(`
+		SELECT
+			%s
+		FROM
+			oauth
+		WHERE
+			refresh_token=$1::text
+	`,
+		orm.GetSelector(models.OAuth{}))
+
+	stmt, err := u.psqlDB.PreparexContext(ctx, sql)
+	if err != nil {
+		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryxContext(ctx, refreshToken)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	oauth, err := u.ormOneOAuth(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return oauth, nil
+}
+
+func (u usersRepository) DeleteOAuth(ctx context.Context, oauthId *uuid.UUID) error {
+	sql := `
+		DELETE
+		FROM
+			oauth
+		WHERE
+			oauth.id=$1::uuid
+	`
+	stmt, err := u.psqlDB.PreparexContext(ctx, sql)
+	if err != nil {
+		return err
+	}
+	defer stmt.Close()
+
+	if _, err := stmt.ExecContext(ctx, oauthId); err != nil {
+		return err
 	}
 
 	return nil
+}
+
+func (u usersRepository) ormOneOAuth(ctx context.Context, rows *sqlx.Rows) (*models.OAuth, error) {
+	mapper, err := orm.OrmContext(ctx, new(models.OAuth), rows, orm.NewMapperOption())
+	if err != nil {
+		return nil, err
+	}
+	oauths := mapper.GetData().([]*models.OAuth)
+	if len(oauths) == 0 {
+		return nil, errors.New(constants.ERROR_OAUTH_NOT_FOUND)
+	}
+	return oauths[0], nil
+}
+
+func (u usersRepository) ormOneUser(ctx context.Context, rows *sqlx.Rows) (*models.User, error) {
+	mapper, err := orm.OrmContext(ctx, new(models.User), rows, orm.MapperOption{})
+	if err != nil {
+		return nil, err
+	}
+	users := mapper.GetData().([]*models.User)
+	if len(users) == 0 {
+		return nil, errors.New(constants.ERROR_USER_NOT_FOUND)
+	}
+
+	return users[0], err
 }

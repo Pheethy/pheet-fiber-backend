@@ -20,8 +20,9 @@ func NewRoute(e fiber.Router) *Route {
 }
 
 func (r Route) RegisterUsers(handler users.IUsersHandlers, m middleware.ImiddlewareHandler) {
-	r.e.Post("/v1/user/signin", handler.GetPassport)
-	r.e.Post("/users/sign-up", handler.SignUpCustomer)
+	r.e.Post("/user/signin", handler.SignIn)
+	r.e.Post("/users/sign-up", handler.InsertUser)
+	r.e.Post("/users/sign-up/admin", handler.InsertAdmin)
 	r.e.Post("/users/sign-out", m.ApiKeyAuth(), handler.SignOut)
 	r.e.Post("/users/refresh", m.ApiKeyAuth(), handler.RefreshPassport)
 	r.e.Get("/users/secret", m.JwtAuth(), m.Authorize(2), handler.GenerateAdminToken)
@@ -42,7 +43,7 @@ func (r Route) RegisterFile(handler file.IFileHandler, m middleware.ImiddlewareH
 
 func (r Route) RegisterProduct(handler products.IProductsHandlers, m middleware.ImiddlewareHandler) {
 	r.e.Get("/product/:product_id", m.ApiKeyAuth(), handler.FetchOneProduct)
-	r.e.Get("/product", handler.FetchAllProduct)
+	r.e.Get("/products", handler.FetchAllProduct)
 	r.e.Post("/product", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.Create)
 	r.e.Put("/product/:product_id", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.UpdateProduct)
 	r.e.Delete("/product/:product_id", m.ApiKeyAuth(), m.JwtAuth(), m.Authorize(1), handler.DeleteProduct)

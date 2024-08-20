@@ -4,10 +4,9 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	_auth_service "pheet-fiber-backend/auth/service"
+	"pheet-fiber-backend/auth"
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/middleware"
-	"pheet-fiber-backend/middleware/usecase"
 	"pheet-fiber-backend/service/utils"
 	"strings"
 
@@ -17,14 +16,15 @@ import (
 	"github.com/opentracing/opentracing-go"
 	"github.com/opentracing/opentracing-go/ext"
 	"github.com/opentracing/opentracing-go/log"
+	"github.com/sirupsen/logrus"
 )
 
 type middlewareHandler struct {
 	cfg      config.Iconfig
-	middleUs usecase.ImiddlewareUsecase
+	middleUs middleware.IMiddlewareUsecase
 }
 
-func NewMiddlewareHandler(cfg config.Iconfig, middleUs usecase.ImiddlewareUsecase) middleware.ImiddlewareHandler {
+func NewMiddlewareHandler(cfg config.Iconfig, middleUs middleware.IMiddlewareUsecase) middleware.ImiddlewareHandler {
 	return middlewareHandler{
 		cfg:      cfg,
 		middleUs: middleUs,
@@ -53,15 +53,16 @@ func (m middlewareHandler) Logger() fiber.Handler {
 
 func (m middlewareHandler) JwtAuth() fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ctx := context.Background()
 		token := strings.TrimPrefix(c.Get("Authorization"), "Bearer ")
-		result, err := _auth_service.ParseToken(m.cfg.Jwt(), token)
+		mapClaims, err := auth.ParseToken(m.cfg.Jwt(), token)
 		if err != nil {
 			return fiber.NewError(http.StatusUnauthorized, err.Error())
 		}
 
-		claims := result.Claims
+		claims := mapClaims.Claims
 
-		if !m.middleUs.FindAccessToken(claims.Id, token) {
+		if !m.middleUs.FindAccessToken(ctx, claims.Id, token) {
 			return fiber.NewError(http.StatusUnauthorized, "no permission to access")
 		}
 
@@ -83,12 +84,13 @@ func (m middlewareHandler) ParamsCheck() fiber.Handler {
 
 func (m middlewareHandler) Authorize(expectedRoleId ...int) fiber.Handler {
 	return func(c *fiber.Ctx) error {
+		ctx := context.Background()
 		userRoleId, ok := c.Locals("role_id").(int)
 		if !ok {
 			return fiber.NewError(http.StatusUnprocessableEntity, "cast role_id to int failed.")
 		}
 
-		roles, err := m.middleUs.FindRole()
+		roles, err := m.middleUs.FetchRoles(ctx)
 		if err != nil {
 			return fiber.NewError(http.StatusInternalServerError, err.Error())
 		}
@@ -113,8 +115,8 @@ func (m middlewareHandler) Authorize(expectedRoleId ...int) fiber.Handler {
 
 func (m middlewareHandler) ApiKeyAuth() fiber.Handler {
 	return func(c *fiber.Ctx) error {
-		var key = c.Get("X-API-KEY")
-		if _, err := _auth_service.ParseApiKey(m.cfg.Jwt(), key); err != nil {
+		key := c.Get("X-API-KEY")
+		if _, err := auth.ParseAPIKey(m.cfg.Jwt(), key); err != nil {
 			return fiber.NewError(http.StatusInternalServerError, "API-KEY is invalid.")
 		}
 		return c.Next()
@@ -124,28 +126,26 @@ func (m middlewareHandler) ApiKeyAuth() fiber.Handler {
 func (m middlewareHandler) SetTracer() fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		var span opentracing.Span
-		var ctx = context.Background()
-		var spanName = fmt.Sprintf("%s %s %s", string(c.Context().Request.URI().Scheme()), c.Method(), c.Path())
+		ctx := c.UserContext()
+		spanName := fmt.Sprintf("%s %s %s", string(c.Context().Request.URI().Scheme()), c.Method(), c.Path())
 		spanCtx, err := opentracing.GlobalTracer().Extract(opentracing.HTTPHeaders, opentracing.HTTPHeadersCarrier(c.GetReqHeaders()))
 		if err != nil && err != opentracing.ErrSpanContextNotFound {
 			return fiber.NewError(http.StatusInternalServerError, err.Error())
 		}
-
 		switch err {
 		case nil:
-			/* has parent span context */
 			span = opentracing.StartSpan(spanName, ext.RPCServerOption(spanCtx))
 		case opentracing.ErrSpanContextNotFound:
-			// No parent span context found, start a new span
 			span, ctx = opentracing.StartSpanFromContext(ctx, spanName)
 		default:
+			logrus.Println("error default")
 			return fiber.NewError(http.StatusInternalServerError, err.Error())
 		}
 		defer span.Finish()
 
 		c.SetUserContext(ctx)
-        // Proceed to the next handler
-        err = c.Next()
+		// Proceed to the next handler
+		err = c.Next()
 
 		m.setTagByFiber(span, c)
 		m.setLogByFiber(span, c)

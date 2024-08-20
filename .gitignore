@@ -1,4 +1,6 @@
 .env
+.air.dev.toml
 .dockerignore
-dockerfile
 docker-compose.yml
+dockerfile
+asset

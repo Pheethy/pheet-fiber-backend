@@ -7,13 +7,13 @@ type Categories struct {
 	Id        int64    `json:"id" db:"id" type:"int64"`
 	Title     string   `json:"title" db:"title" type:"string"`
 
-	ProductId *uuid.UUID `json:"-" db:"product_id" type:"string"`
+	ProductId *uuid.UUID `json:"-" db:"product_id" type:"uuid"`
 }
 
 type ProductsCategories struct {
 	TableName  struct{}   `json:"-" db:"products_categories" pk:"Id"`
 	Id         *uuid.UUID `json:"id" db:"id" type:"uuid"`
-	ProductId  *uuid.UUID `json:"product_id" db:"product_id" type:"string"`
+	ProductId  *uuid.UUID `json:"product_id" db:"product_id" type:"uuid"`
 	CategoryId int64      `json:"category_id" db:"category_id" type:"int64"`
 
 	Category *Categories `json:"category" db:"-" fk:"fk_field1:CategoryId,fk_field2:Id"`

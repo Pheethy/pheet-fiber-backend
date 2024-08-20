@@ -2,15 +2,16 @@ package usecase
 
 import (
 	"context"
-	"fmt"
+	"errors"
+	"pheet-fiber-backend/auth"
 	"pheet-fiber-backend/config"
 	"pheet-fiber-backend/constants"
 	"pheet-fiber-backend/models"
+	"pheet-fiber-backend/polymor"
 	"pheet-fiber-backend/service/users"
 
-	_auth_service "pheet-fiber-backend/auth/service"
-
-	"golang.org/x/crypto/bcrypt"
+	"github.com/gofrs/uuid"
+	"github.com/opentracing/opentracing-go"
 )
 
 type usersUsecase struct {
@@ -19,129 +20,159 @@ type usersUsecase struct {
 }
 
 func NewUsersUsecase(cfg config.Iconfig, usersRepo users.IUsersRepository) users.IUsersUsecase {
-	return &usersUsecase{
+	return usersUsecase{
 		cfg:       cfg,
 		usersRepo: usersRepo,
 	}
 }
 
-func (u usersUsecase) InsertCustomer(userReq *models.UserRegisterReq) (*models.UserPassport, error) {
-	// Hashing a password
+func (u usersUsecase) InsertUser(ctx context.Context, userReq *models.User) (*models.UserPassport, error) {
+	/* Hashing Password */
 	if err := userReq.BcryptHashing(); err != nil {
 		return nil, err
 	}
 
-	return u.usersRepo.InsertUser(userReq, false)
+	return u.usersRepo.InsertUser(ctx, userReq, false)
 }
 
-func (u usersUsecase) InsertAdmin(userReq *models.UserRegisterReq) (*models.UserPassport, error) {
-	// Hashing a password
+func (u usersUsecase) InsertAdmin(ctx context.Context, userReq *models.User) (*models.UserPassport, error) {
+	/* Hashing Password */
 	if err := userReq.BcryptHashing(); err != nil {
 		return nil, err
 	}
 
-	return u.usersRepo.InsertUser(userReq, true)
+	return u.usersRepo.InsertUser(ctx, userReq, true)
 }
 
-func (u usersUsecase) GetPassport(ctx context.Context, req *models.UserCredential) (*models.UserPassport, error) {
-	//Fetch User
-	user, err := u.usersRepo.FindOneUserByEmail(ctx, req.Email)
+func (u usersUsecase) FetchUserProfile(ctx context.Context, userId *uuid.UUID) (*models.UserProfile, error) {
+	span, ctx := opentracing.StartSpanFromContext(ctx, "FetchUserProfile")
+	defer span.Finish()
+
+	user, err := u.usersRepo.FetchOneUserById(ctx, userId)
 	if err != nil {
 		return nil, err
 	}
-
-	//Check Password
-	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
-		return nil, fmt.Errorf("password is invalid: %v", err)
+	userProfile := &models.UserProfile{
+		Id:        user.Id,
+		Username:  user.Username,
+		Email:     user.Email,
+		RoleId:    user.RoleId,
+		RoleTitle: user.RoleTitle,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
 	}
+	return userProfile, nil
+}
 
-	//Access Token
-	access, err := _auth_service.NewAuthService(constants.Access, u.cfg.Jwt(), &models.UserClaims{
+func (u usersUsecase) GetPassport(ctx context.Context, req *models.User) (*models.UserPassport, error) {
+	/* Find User */
+	user, err := u.usersRepo.FetchOneUserByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, err
+	}
+	/* Check Password */
+	if ok := user.ComparePassword(req); !ok {
+		return nil, errors.New(constants.ERROR_PASSWORD_NOT_MATCH)
+	}
+	/* Sign Token */
+	accessToken, err := auth.NewAuth(constants.Access, u.cfg.Jwt(), &models.UserClaims{
 		Id:     user.Id,
 		RoleId: user.RoleId,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("")
+		return nil, err
 	}
-	// Refresh Token
-	refresh, err := _auth_service.NewAuthService(constants.Refresh, u.cfg.Jwt(), &models.UserClaims{
+	refreshToken, err := auth.NewAuth(constants.Refresh, u.cfg.Jwt(), &models.UserClaims{
 		Id:     user.Id,
 		RoleId: user.RoleId,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("")
+		return nil, err
 	}
-
-	//Cast user to userPassport
+	/* Prepare OAuth */
+	reqOAuth := new(models.OAuth)
+	polymor.SetDefult(reqOAuth)
+	/* Create Instant UserPassport */
 	userPass := &models.UserPassport{
-		User: &models.Users{
-			Id:       user.Id,
-			Email:    user.Email,
-			UserName: user.Username,
-			RoleId:   user.RoleId,
+		User: &models.User{
+			Id:        user.Id,
+			Username:  user.Username,
+			Email:     user.Email,
+			RoleId:    user.RoleId,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
 		},
 		Token: &models.UserToken{
-			AccessToken:  access.SignToken(),
-			RefreshToken: refresh.SignToken(),
+			Id:           reqOAuth.Id,
+			AccessToken:  accessToken.SignToken(),
+			RefreshToken: refreshToken.SignToken(),
 		},
 	}
-
-	if err := u.usersRepo.InsertOauth(ctx, userPass); err != nil {
+	/* Stamp OAuth */
+	reqOAuth.SetToken(userPass)
+	if err := u.usersRepo.UpsertOAuth(ctx, reqOAuth); err != nil {
 		return nil, err
 	}
 
 	return userPass, nil
 }
 
-func (u usersUsecase) FetchUserProfile(ctx context.Context, userId string) (*models.Users, error) {
-	return u.usersRepo.FetchUserProfile(ctx, userId)
-}
-
 func (u usersUsecase) RefreshPassport(ctx context.Context, req *models.UserRefreshCredential) (*models.UserPassport, error) {
-
-	claims, err := _auth_service.ParseToken(u.cfg.Jwt(), req.RefreshToken)
+	/* Parse Token */
+	claims, err := auth.ParseToken(u.cfg.Jwt(), req.RefreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("parse token failed: %v", err)
+		return nil, err
 	}
-
-	oAuth, err := u.usersRepo.FetchOneOauth(ctx, req.RefreshToken)
+	/* Find Oauth*/
+	oauth, err := u.usersRepo.FetchOAuthByRefreshToken(ctx, req.RefreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("FetchOneOauth Failed: %v", err)
+		return nil, err
 	}
-
-	user, err := u.usersRepo.FetchUserProfile(ctx, oAuth.UserId)
+	/* Find User */
+	user, err := u.usersRepo.FetchOneUserById(ctx, oauth.UserId)
 	if err != nil {
-		return nil, fmt.Errorf("fetch user profile failed: %v", err)
+		return nil, err
 	}
-
+	/* Create New Claims */
 	newClaims := &models.UserClaims{
 		Id:     user.Id,
 		RoleId: user.RoleId,
 	}
-
-	accessToken, err := _auth_service.NewAuthService(constants.Access, u.cfg.Jwt(), newClaims)
+	/* Sign Token */
+	accessToken, err := auth.NewAuth(constants.Access, u.cfg.Jwt(), newClaims)
 	if err != nil {
-		return nil, fmt.Errorf("new claims failed: %v", err)
+		return nil, err
 	}
-
-	refreshToken := _auth_service.RepeatToken(u.cfg.Jwt(), newClaims, claims.ExpiresAt.Unix())
-
-	passport := &models.UserPassport{
-		User:  user,
+	refreshToken := auth.RepeatClaims(u.cfg.Jwt(), newClaims, int(claims.ExpiresAt.Unix()))
+	/* Create UserPassport */
+	userPass := &models.UserPassport{
+		User: &models.User{
+			Id:        user.Id,
+			Username:  user.Username,
+			Email:     user.Email,
+			RoleId:    user.RoleId,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+		},
 		Token: &models.UserToken{
-			Id:           oAuth.Id.String(),
+			Id:           oauth.Id,
 			AccessToken:  accessToken.SignToken(),
 			RefreshToken: refreshToken,
 		},
 	}
-
-	if err := u.usersRepo.UpdateOauth(ctx, passport.Token); err != nil {
-		return nil, fmt.Errorf("update oauth failed: %v", err)
+	/* Update Oauth */
+	oauth.SetToken(userPass)
+	if err := u.usersRepo.UpsertOAuth(ctx, oauth); err != nil {
+		return nil, err
 	}
 
-	return passport, nil
+	return userPass, nil
 }
 
-func (u usersUsecase) DeleteOauth(ctx context.Context, oId string) error {
-	return u.usersRepo.DeleteOauth(ctx, oId)
+func (u usersUsecase) FetchOneOauth(ctx context.Context, refreshToken string) (*models.OAuth, error) {
+	return u.usersRepo.FetchOAuthByRefreshToken(ctx, refreshToken)
+}
+
+func (u usersUsecase) DeleteOAuth(ctx context.Context, oauthId *uuid.UUID) error {
+	return u.usersRepo.DeleteOAuth(ctx, oauthId)
 }

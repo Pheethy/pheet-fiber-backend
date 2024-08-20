@@ -1,28 +1,28 @@
 package usecase
 
 import (
-	"pheet-fiber-backend/middleware/repository"
+	"context"
+	"pheet-fiber-backend/middleware"
 	"pheet-fiber-backend/models"
+
+	"github.com/gofrs/uuid"
 )
 
-
-type ImiddlewareUsecase interface {
-	FindAccessToken(userId, accessToken string) bool
-	FindRole() ([]*models.Role, error)
-}
-
 type middlewareUsecase struct {
-	middleRepo repository.ImiddlewareRepository
+	middleRepo middleware.IMiddlewareRepository
 }
 
-func NewMiddlewareUsecase(middleRepo repository.ImiddlewareRepository) ImiddlewareUsecase {
-	return middlewareUsecase{middleRepo: middleRepo}
+func NewMiddlewareUsecase(middleRepo middleware.IMiddlewareRepository) middleware.IMiddlewareUsecase {
+	return middlewareUsecase{
+		middleRepo: middleRepo,
+	}
 }
 
-func (u middlewareUsecase) FindAccessToken(userId, accessToken string) bool {
-	return u.middleRepo.FindAccessToken(userId, accessToken)
+func (m middlewareUsecase) FindAccessToken(ctx context.Context, userId *uuid.UUID, accessToken string) bool {
+	return m.middleRepo.FindAccessToken(ctx, userId, accessToken)
 }
 
-func (u middlewareUsecase) FindRole() ([]*models.Role, error) {
-	return u.middleRepo.FindRole()
+func (m middlewareUsecase) FetchRoles(ctx context.Context) ([]*models.Roles, error) {
+	return m.middleRepo.FetchRoles(ctx)
 }
+

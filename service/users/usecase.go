@@ -3,13 +3,17 @@ package users
 import (
 	"context"
 	"pheet-fiber-backend/models"
+
+	"github.com/gofrs/uuid"
 )
 
 type IUsersUsecase interface {
-	InsertAdmin(userReq *models.UserRegisterReq) (*models.UserPassport, error)
-	InsertCustomer(userReq *models.UserRegisterReq) (*models.UserPassport, error)
-	GetPassport(ctx context.Context, req *models.UserCredential) (*models.UserPassport, error)
-	FetchUserProfile(ctx context.Context, userId string) (*models.Users, error)
+	FetchOneOauth(ctx context.Context, refreshToken string) (*models.OAuth, error)
+	FetchUserProfile(ctx context.Context, userId *uuid.UUID) (*models.UserProfile, error)
+	InsertUser(ctx context.Context, userReq *models.User) (*models.UserPassport, error)
+	InsertAdmin(ctx context.Context, userReq *models.User) (*models.UserPassport, error)
+	GetPassport(ctx context.Context, req *models.User) (*models.UserPassport, error)
 	RefreshPassport(ctx context.Context, req *models.UserRefreshCredential) (*models.UserPassport, error)
-	DeleteOauth(ctx context.Context, oId string) error
+	DeleteOAuth(ctx context.Context, oauthId *uuid.UUID) error
 }
+

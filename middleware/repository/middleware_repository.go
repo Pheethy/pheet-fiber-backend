@@ -1,56 +1,91 @@
 package repository
 
 import (
+	"context"
+	"errors"
+	"fmt"
+	"pheet-fiber-backend/constants"
+	"pheet-fiber-backend/middleware"
 	"pheet-fiber-backend/models"
 
+	"github.com/Pheethy/psql/orm"
 	"github.com/Pheethy/sqlx"
+	"github.com/gofrs/uuid"
 )
 
-type ImiddlewareRepository interface {
-	FindAccessToken(userId, accessToken string) bool
-	FindRole() ([]*models.Role, error)
-}
-
 type middlewareRepository struct {
-	db *sqlx.DB
+	psqlDB *sqlx.DB
 }
 
-func NewMiddlewareRepository(db *sqlx.DB) ImiddlewareRepository {
-	return middlewareRepository{db: db}
+func NewMiddlewareRepository(psqlDB *sqlx.DB) middleware.IMiddlewareRepository {
+	return middlewareRepository{
+		psqlDB: psqlDB,
+	}
 }
 
-func (r middlewareRepository) FindAccessToken(userId, accessToken string) bool {
+func (m middlewareRepository) FindAccessToken(ctx context.Context, userId *uuid.UUID, accessToken string) bool {
+	var ok bool
 	sql := `
 		SELECT
-			(CASE WHEN COUNT(*) = 1 THEN TRUE ELSE FALSE END)
+			(CASE WHEN count(*) = 1 THEN TRUE ELSE FALSE END)
 		FROM
-			"oauth"
+			oauth
 		WHERE
-			"user_id" = $1
+			oauth.user_id = $1::uuid
 		AND
-			"access_token" = $2;
+			oauth.access_token = $2::text 
 	`
-	var check bool
-	if err := r.db.Get(&check, sql, userId, accessToken); err != nil {
+	stmt, err := m.psqlDB.PreparexContext(ctx, sql)
+	if err != nil {
+		return false
+	}
+	defer stmt.Close()
+
+	if err := stmt.GetContext(ctx, &ok, userId, accessToken); err != nil {
 		return false
 	}
 
-	return true
+	return ok
 }
 
-func (r middlewareRepository) FindRole() ([]*models.Role, error) {
-	sql := `
+func (m middlewareRepository) FetchRoles(ctx context.Context) ([]*models.Roles, error) {
+	sql := fmt.Sprintf(`
 		SELECT
-			"id",
-			"title"
+			%s
 		FROM
-			"roles"
-		ORDER BY
-			"id" DESC;
-	`
-	var roles = make([]*models.Role, 0)
-	if err := r.db.Select(&roles, sql); err != nil {
+			roles
+		ORDER BY roles.id DESC;
+	`,
+		orm.GetSelector(models.Roles{}),
+	)
+
+	stmt, err := m.psqlDB.PreparexContext(ctx, sql)
+	if err != nil {
 		return nil, err
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.QueryxContext(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	roles, err := m.ormRoles(ctx, rows)
+	if err != nil {
+		return nil, err
+	}
+
+	return roles, nil
+}
+
+func (m middlewareRepository) ormRoles(ctx context.Context, rows *sqlx.Rows) ([]*models.Roles, error) {
+	mapper, err := orm.OrmContext(ctx, new(models.Roles), rows, orm.NewMapperOption())
+	if err != nil {
+		return nil, err
+	}
+	roles := mapper.GetData().([]*models.Roles)
+	if len(roles) == 0 {
+		return nil, errors.New(constants.ERROR_ROLES_NOT_FOUND)
 	}
 
 	return roles, nil

@@ -112,12 +112,14 @@ func main() {
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt)
 	go func() {
-		_ = <-c
+		ticker := <-c
 		log.Println("Server is shutting down...")
-		_ = app.Shutdown()
+		if ticker != nil {
+			app.Shutdown()
+		}
 	}()
 
 	// Listen to host:port
-	log.Printf("Server is starting on %v", cfg.App().Url())
+	log.Printf("🍫Server is starting on %v", cfg.App().Url())
 	app.Listen(cfg.App().Url())
 }

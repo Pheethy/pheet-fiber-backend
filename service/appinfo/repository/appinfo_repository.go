@@ -21,8 +21,8 @@ func NewAppInfoRepository(db *sqlx.DB) appinfo.AppInfoRepository {
 }
 
 func (r appInfoRepository) whereCond(args *sync.Map) ([]string, []interface{}) {
-	var cond = make([]string, 0)
-	var vals = make([]interface{}, 0)
+	cond := make([]string, 0)
+	vals := make([]interface{}, 0)
 
 	if v, ok := args.Load("search_word"); ok {
 		search := `(LOWER("title") LIKE $1)`
@@ -51,9 +51,9 @@ func (r appInfoRepository) FindCategory(ctx context.Context, args *sync.Map) ([]
 		where,
 	)
 
-	var cats = make([]*models.Categories, 0)
+	cats := make([]*models.Categories, 0)
 	if err := r.db.SelectContext(ctx, &cats, sql, vals...); err != nil {
-		return nil, fmt.Errorf("Insert catagories failed: %v", err)
+		return nil, fmt.Errorf("insert catagories failed: %v", err)
 	}
 
 	return cats, nil

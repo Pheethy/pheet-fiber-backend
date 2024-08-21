@@ -28,7 +28,7 @@ func NewProductsRepository(psqlDB *sqlx.DB) products.IProductsRepositoryDB {
 	}
 }
 
-func (p productsRepository) whereCond(ctx context.Context, args *sync.Map) ([]string, []interface{}) {
+func (p productsRepository) whereCond(args *sync.Map) ([]string, []interface{}) {
 	conds := []string{}
 	var valArgs []interface{}
 
@@ -47,7 +47,7 @@ func (p productsRepository) whereCond(ctx context.Context, args *sync.Map) ([]st
 }
 
 func (p productsRepository) FetchAllProducts(ctx context.Context, args *sync.Map, paginator *helper.Paginator) ([]*models.Products, error) {
-	conds, valArgs := p.whereCond(ctx, args)
+	conds, valArgs := p.whereCond(args)
 	var where string
 	var paginateSQL string
 	if len(conds) > 0 {
